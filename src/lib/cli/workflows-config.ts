@@ -1,5 +1,5 @@
 // Pre-configured Workflows
-// Inspired by SuperAGI, Superagent, and OpenClaw configurations
+// Inspired by SuperAGI, Superagent, OpenClaw, ai-agent-skills, and vibe-coding configurations
 
 export interface WorkflowConfig {
   id: string;
@@ -11,6 +11,7 @@ export interface WorkflowConfig {
   schedule?: string;
   active: boolean;
   tags: string[];
+  source?: string;
 }
 
 export interface WorkflowStep {
@@ -28,7 +29,8 @@ export type WorkflowCategory =
   | 'content'
   | 'automation'
   | 'analysis'
-  | 'communication';
+  | 'communication'
+  | 'vibe';
 
 export type StepType = 
   | 'llm'
@@ -41,11 +43,392 @@ export type StepType =
   | 'mcp'
   | 'condition'
   | 'loop'
-  | 'output';
+  | 'output'
+  | 'agent';
 
 // Pre-configured workflows
 export const PRECONFIGURED_WORKFLOWS: WorkflowConfig[] = [
-  // Development Workflows
+  // ============ VIBE WORKFLOWS ============
+  {
+    id: 'vibe-new-project',
+    name: 'Vibe New Project',
+    description: 'Initialize a new project with vibe-coding best practices, architecture planning, and initial scaffolding',
+    category: 'vibe',
+    trigger: 'manual',
+    active: true,
+    tags: ['vibe', 'init', 'scaffold'],
+    source: 'vibe-skill',
+    steps: [
+      {
+        id: 'analyze-requirements',
+        type: 'llm',
+        name: 'Analyze Requirements',
+        config: {
+          prompt: 'Analyze the project requirements and create a comprehensive specification',
+          temperature: 0.4,
+        },
+        onFailure: 'stop',
+      },
+      {
+        id: 'plan-architecture',
+        type: 'agent',
+        name: 'Plan Architecture',
+        config: {
+          agent: 'vibe-architect',
+          task: 'Design the system architecture',
+        },
+        onFailure: 'retry',
+        retryCount: 2,
+      },
+      {
+        id: 'scaffold-project',
+        type: 'code',
+        name: 'Scaffold Project',
+        config: {
+          action: 'scaffold',
+          createStructure: true,
+          initializeGit: true,
+        },
+        onFailure: 'stop',
+      },
+      {
+        id: 'generate-docs',
+        type: 'output',
+        name: 'Generate Documentation',
+        config: {
+          format: 'markdown',
+          files: ['README.md', 'ARCHITECTURE.md', 'CONTRIBUTING.md'],
+        },
+        onFailure: 'continue',
+      },
+    ],
+  },
+  {
+    id: 'vibe-code-review',
+    name: 'Vibe Code Review',
+    description: 'Comprehensive code review with architecture checks, security scan, and improvement suggestions',
+    category: 'vibe',
+    trigger: 'manual',
+    active: true,
+    tags: ['vibe', 'review', 'quality'],
+    source: 'vibe-skill',
+    steps: [
+      {
+        id: 'analyze-code',
+        type: 'code',
+        name: 'Analyze Code',
+        config: {
+          action: 'analyze',
+          checkStyle: true,
+          checkComplexity: true,
+        },
+        onFailure: 'continue',
+      },
+      {
+        id: 'check-architecture',
+        type: 'agent',
+        name: 'Check Architecture',
+        config: {
+          agent: 'vibe-architect',
+          task: 'Review architecture compliance',
+        },
+        onFailure: 'continue',
+      },
+      {
+        id: 'security-scan',
+        type: 'llm',
+        name: 'Security Scan',
+        config: {
+          prompt: 'Identify security vulnerabilities and potential issues',
+          temperature: 0.2,
+        },
+        onFailure: 'continue',
+      },
+      {
+        id: 'generate-report',
+        type: 'output',
+        name: 'Generate Review Report',
+        config: {
+          format: 'markdown',
+          template: 'code-review',
+        },
+        onFailure: 'continue',
+      },
+    ],
+  },
+  {
+    id: 'vibe-deploy-pipeline',
+    name: 'Vibe Deploy Pipeline',
+    description: 'Complete deployment pipeline with pre-deploy checks, deployment, and post-deploy verification',
+    category: 'vibe',
+    trigger: 'manual',
+    active: true,
+    tags: ['vibe', 'deploy', 'devops'],
+    source: 'vibe-skill',
+    steps: [
+      {
+        id: 'pre-deploy-checks',
+        type: 'agent',
+        name: 'Pre-Deploy Checks',
+        config: {
+          agent: 'vibe-deploy',
+          task: 'Run pre-deployment checklist',
+        },
+        onFailure: 'stop',
+      },
+      {
+        id: 'run-tests',
+        type: 'code',
+        name: 'Run Tests',
+        config: {
+          action: 'test',
+          coverage: true,
+        },
+        onFailure: 'stop',
+      },
+      {
+        id: 'deploy',
+        type: 'api',
+        name: 'Deploy',
+        config: {
+          action: 'deploy',
+          environment: 'production',
+        },
+        onFailure: 'retry',
+        retryCount: 3,
+      },
+      {
+        id: 'post-deploy-verify',
+        type: 'agent',
+        name: 'Post-Deploy Verification',
+        config: {
+          agent: 'vibe-doctor',
+          task: 'Verify deployment health',
+        },
+        onFailure: 'continue',
+      },
+    ],
+  },
+  {
+    id: 'vibe-bug-fix',
+    name: 'Vibe Bug Fix',
+    description: 'Intelligent bug fixing workflow with diagnosis, fix implementation, and verification',
+    category: 'vibe',
+    trigger: 'manual',
+    active: true,
+    tags: ['vibe', 'bug', 'fix'],
+    source: 'vibe-skill',
+    steps: [
+      {
+        id: 'diagnose',
+        type: 'agent',
+        name: 'Diagnose Bug',
+        config: {
+          agent: 'vibe-doctor',
+          task: 'Analyze and diagnose the bug',
+        },
+        onFailure: 'stop',
+      },
+      {
+        id: 'propose-fix',
+        type: 'llm',
+        name: 'Propose Fix',
+        config: {
+          prompt: 'Propose a solution to fix the identified bug with minimal changes',
+          temperature: 0.3,
+        },
+        onFailure: 'continue',
+      },
+      {
+        id: 'implement-fix',
+        type: 'code',
+        name: 'Implement Fix',
+        config: {
+          action: 'edit',
+          autoFormat: true,
+        },
+        onFailure: 'stop',
+      },
+      {
+        id: 'verify-fix',
+        type: 'code',
+        name: 'Verify Fix',
+        config: {
+          action: 'test',
+          runRelated: true,
+        },
+        onFailure: 'continue',
+      },
+    ],
+  },
+
+  // ============ AI AGENT SKILLS WORKFLOWS ============
+  {
+    id: 'pr-review-workflow',
+    name: 'PR Review Workflow',
+    description: 'Full PR review orchestrator that runs blast radius + drift check on changed files',
+    category: 'development',
+    trigger: 'manual',
+    active: true,
+    tags: ['pr', 'review', 'git'],
+    source: 'ai-agent-skills',
+    steps: [
+      {
+        id: 'fetch-comments',
+        type: 'api',
+        name: 'Fetch PR Comments',
+        config: {
+          action: 'fetch-pr-comments',
+        },
+        onFailure: 'continue',
+      },
+      {
+        id: 'blast-radius',
+        type: 'code',
+        name: 'Calculate Blast Radius',
+        config: {
+          action: 'blast-radius',
+          analyzeImpact: true,
+        },
+        onFailure: 'continue',
+      },
+      {
+        id: 'drift-check',
+        type: 'agent',
+        name: 'Drift Check',
+        config: {
+          agent: 'brownfield-drift',
+          task: 'Check architecture boundaries',
+        },
+        onFailure: 'continue',
+      },
+      {
+        id: 'categorize',
+        type: 'llm',
+        name: 'Categorize Comments',
+        config: {
+          prompt: 'Categorize review comments by impact and priority',
+          temperature: 0.2,
+        },
+        onFailure: 'continue',
+      },
+      {
+        id: 'output-report',
+        type: 'output',
+        name: 'Output Review Report',
+        config: {
+          format: 'markdown',
+          template: 'pr-review',
+        },
+        onFailure: 'continue',
+      },
+    ],
+  },
+  {
+    id: 'deploy-checklist-workflow',
+    name: 'Deploy Checklist Workflow',
+    description: 'Pre-deploy and post-deploy checklist verification',
+    category: 'automation',
+    trigger: 'manual',
+    active: true,
+    tags: ['deploy', 'checklist', 'devops'],
+    source: 'ai-agent-skills',
+    steps: [
+      {
+        id: 'check-env-vars',
+        type: 'code',
+        name: 'Check Environment Variables',
+        config: {
+          action: 'check-env',
+          required: true,
+        },
+        onFailure: 'stop',
+      },
+      {
+        id: 'check-migrations',
+        type: 'code',
+        name: 'Check Migrations',
+        config: {
+          action: 'check-migrations',
+          verifyReady: true,
+        },
+        onFailure: 'continue',
+      },
+      {
+        id: 'check-ci',
+        type: 'api',
+        name: 'Check CI Status',
+        config: {
+          action: 'check-ci',
+        },
+        onFailure: 'stop',
+      },
+      {
+        id: 'check-rollback',
+        type: 'llm',
+        name: 'Check Rollback Plan',
+        config: {
+          prompt: 'Verify rollback plan exists and is documented',
+          temperature: 0.2,
+        },
+        onFailure: 'continue',
+      },
+      {
+        id: 'run-smoke-tests',
+        type: 'code',
+        name: 'Run Smoke Tests',
+        config: {
+          action: 'test',
+          type: 'smoke',
+        },
+        onFailure: 'continue',
+      },
+    ],
+  },
+  {
+    id: 'sprint-init-workflow',
+    name: 'Sprint Init Workflow',
+    description: 'Sprint initiation workflow that generates branch names and PR templates',
+    category: 'automation',
+    trigger: 'manual',
+    active: true,
+    tags: ['sprint', 'agile', 'planning'],
+    source: 'ai-agent-skills',
+    steps: [
+      {
+        id: 'parse-ticket',
+        type: 'llm',
+        name: 'Parse Ticket',
+        config: {
+          prompt: 'Parse ticket title and description to extract key information',
+          temperature: 0.2,
+        },
+        onFailure: 'stop',
+      },
+      {
+        id: 'generate-branch',
+        type: 'code',
+        name: 'Generate Branch Name',
+        config: {
+          action: 'git-branch',
+          convention: 'git-os',
+        },
+        onFailure: 'continue',
+      },
+      {
+        id: 'generate-pr-template',
+        type: 'output',
+        name: 'Generate PR Template',
+        config: {
+          format: 'markdown',
+          template: 'pr-description',
+        },
+        onFailure: 'continue',
+      },
+    ],
+  },
+
+  // ============ DEVELOPMENT WORKFLOWS ============
   {
     id: 'code-review',
     name: 'Code Review',
@@ -193,7 +576,7 @@ export const PRECONFIGURED_WORKFLOWS: WorkflowConfig[] = [
     ],
   },
 
-  // Research Workflows
+  // ============ RESEARCH WORKFLOWS ============
   {
     id: 'deep-research',
     name: 'Deep Research',
@@ -289,7 +672,7 @@ export const PRECONFIGURED_WORKFLOWS: WorkflowConfig[] = [
     ],
   },
 
-  // Content Workflows
+  // ============ CONTENT WORKFLOWS ============
   {
     id: 'blog-post-creator',
     name: 'Blog Post Creator',
@@ -386,7 +769,7 @@ export const PRECONFIGURED_WORKFLOWS: WorkflowConfig[] = [
     ],
   },
 
-  // Automation Workflows
+  // ============ AUTOMATION WORKFLOWS ============
   {
     id: 'daily-summary',
     name: 'Daily Summary',
@@ -472,7 +855,7 @@ export const PRECONFIGURED_WORKFLOWS: WorkflowConfig[] = [
     ],
   },
 
-  // Analysis Workflows
+  // ============ ANALYSIS WORKFLOWS ============
   {
     id: 'data-analysis',
     name: 'Data Analysis',
@@ -567,7 +950,7 @@ export const PRECONFIGURED_WORKFLOWS: WorkflowConfig[] = [
     ],
   },
 
-  // Communication Workflows
+  // ============ COMMUNICATION WORKFLOWS ============
   {
     id: 'email-drafter',
     name: 'Email Drafter',
@@ -633,4 +1016,18 @@ export function getActiveWorkflows(workflows: WorkflowConfig[]): WorkflowConfig[
 // Get scheduled workflows
 export function getScheduledWorkflows(workflows: WorkflowConfig[]): WorkflowConfig[] {
   return workflows.filter(w => w.trigger === 'schedule' && w.active);
+}
+
+// Get workflow count
+export function getWorkflowCount(workflows: WorkflowConfig[]): { total: number; active: number; byCategory: Record<WorkflowCategory, number> } {
+  const byCategory = workflows.reduce((acc, workflow) => {
+    acc[workflow.category] = (acc[workflow.category] || 0) + 1;
+    return acc;
+  }, {} as Record<WorkflowCategory, number>);
+
+  return {
+    total: workflows.length,
+    active: workflows.filter(w => w.active).length,
+    byCategory,
+  };
 }

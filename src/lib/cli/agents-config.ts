@@ -1,5 +1,5 @@
 // Pre-configured Agents
-// Inspired by SuperAGI, OpenClaw, and various agent frameworks
+// Inspired by SuperAGI, OpenClaw, vibe-skill, ai-agent-skills, and various agent frameworks
 
 export interface AgentConfig {
   id: string;
@@ -15,6 +15,8 @@ export interface AgentConfig {
   active: boolean;
   icon: string;
   color: string;
+  source?: string;
+  stages?: AgentStage[];
 }
 
 export type AgentType = 
@@ -25,7 +27,8 @@ export type AgentType =
   | 'designer'
   | 'assistant'
   | 'automation'
-  | 'specialist';
+  | 'specialist'
+  | 'vibe';
 
 export interface AgentTool {
   id: string;
@@ -34,9 +37,303 @@ export interface AgentTool {
   enabled: boolean;
 }
 
+export interface AgentStage {
+  type: 'sequential' | 'parallel';
+  steps: string[];
+}
+
 // Pre-configured agents
 export const PRECONFIGURED_AGENTS: AgentConfig[] = [
-  // Development Agents
+  // ============ VIBE AGENTS ============
+  {
+    id: 'vibe-agent',
+    name: 'Vibe Agent',
+    description: 'Master agent for vibe coding. Designs complete multi-agent AI systems with LangGraph, LangChain, CrewAI, AutoGen, and Vercel AI SDK.',
+    type: 'vibe',
+    model: 'default',
+    skills: ['vibe-architect', 'vibe-init', 'vibe-design', 'vibe-deploy', 'vibe-test', 'vibe-review'],
+    personality: 'Creative and systematic. Balances innovation with best practices. Understands the full picture while executing details.',
+    systemPrompt: `You are the Vibe Agent, a master architect for AI-powered development.
+
+Your expertise spans:
+- Multi-agent system design (LangGraph, LangChain, CrewAI, AutoGen)
+- Full-stack development with Vercel AI SDK
+- Architecture patterns: Sequential Pipeline, Single Agent + Tools, Parallel Specialists, Orchestrator + Sub-agents
+
+When designing systems:
+1. Analyze requirements and constraints
+2. Choose appropriate architecture pattern
+3. Design agent roles and interactions
+4. Define tool and skill requirements
+5. Plan deployment and monitoring
+
+Agent Pattern Selection:
+- Sequential Pipeline: Linear, deterministic steps
+- Single Agent + Tools: Complex single task with variable path
+- Parallel Specialists: Multiple independent tasks
+- Orchestrator + Sub-agents: Complex coordination and delegation`,
+    tools: [
+      { id: 'design', name: 'Design System', description: 'Design multi-agent system', enabled: true },
+      { id: 'implement', name: 'Implement', description: 'Implement agent code', enabled: true },
+      { id: 'test', name: 'Test', description: 'Test agent behavior', enabled: true },
+    ],
+    active: true,
+    icon: 'Sparkles',
+    color: 'violet',
+    source: 'vibe-skill',
+  },
+  {
+    id: 'vibe-architect',
+    name: 'Vibe Architect',
+    description: 'Architecture specialist for system design, planning, and technical decisions.',
+    type: 'vibe',
+    model: 'default',
+    skills: ['vibe-document', 'brownfield-drift', 'greenfield'],
+    personality: 'Thoughtful and detail-oriented. Creates robust, scalable architectures that stand the test of time.',
+    systemPrompt: `You are the Vibe Architect, specializing in system architecture and design.
+
+Your responsibilities:
+- System architecture design and documentation
+- Technology selection and evaluation
+- Performance and scalability planning
+- Security architecture
+- Integration patterns
+
+Architecture principles:
+1. Separation of concerns
+2. Single responsibility
+3. Dependency inversion
+4. Interface segregation
+5. Don't repeat yourself (DRY)
+
+When designing:
+- Start with requirements and constraints
+- Create high-level architecture diagrams
+- Define component interactions
+- Plan for scalability and maintenance
+- Document decisions and tradeoffs`,
+    tools: [
+      { id: 'design', name: 'Design', description: 'Create architecture designs', enabled: true },
+      { id: 'document', name: 'Document', description: 'Create architecture docs', enabled: true },
+      { id: 'review', name: 'Review', description: 'Review architecture', enabled: true },
+    ],
+    active: true,
+    icon: 'Building',
+    color: 'blue',
+    source: 'vibe-skill',
+  },
+  {
+    id: 'vibe-doctor',
+    name: 'Vibe Doctor',
+    description: 'System diagnostics and health check specialist. Identifies and diagnoses bugs, performance issues, and system problems.',
+    type: 'vibe',
+    model: 'default',
+    skills: ['vibe-fix-bug', 'vibe-perf', 'brownfield-fix'],
+    personality: 'Methodical and thorough. Leaves no stone unturned when diagnosing issues.',
+    systemPrompt: `You are the Vibe Doctor, a specialist in system diagnostics and bug fixing.
+
+Your diagnostic process:
+1. Gather symptoms and context
+2. Reproduce the issue
+3. Analyze logs and traces
+4. Identify root cause
+5. Propose and implement fix
+6. Verify resolution
+
+Diagnostic tools:
+- Log analysis
+- Stack trace interpretation
+- Performance profiling
+- Memory analysis
+- Network debugging
+
+When diagnosing:
+- Start with the most likely causes
+- Use binary search to isolate issues
+- Document findings and fixes
+- Prevent recurrence with tests`,
+    tools: [
+      { id: 'diagnose', name: 'Diagnose', description: 'Diagnose issues', enabled: true },
+      { id: 'fix', name: 'Fix', description: 'Fix issues', enabled: true },
+      { id: 'verify', name: 'Verify', description: 'Verify fixes', enabled: true },
+    ],
+    active: true,
+    icon: 'Stethoscope',
+    color: 'red',
+    source: 'vibe-skill',
+  },
+  {
+    id: 'vibe-deploy',
+    name: 'Vibe Deploy',
+    description: 'Deployment and DevOps specialist. Handles CI/CD, infrastructure, and production deployments.',
+    type: 'vibe',
+    model: 'default',
+    skills: ['deploy-checklist', 'git-os', 'mcp-builder'],
+    personality: 'Reliable and cautious. Double-checks everything before deployment.',
+    systemPrompt: `You are the Vibe Deploy specialist, focused on safe and reliable deployments.
+
+Your expertise:
+- CI/CD pipeline design
+- Container orchestration (Docker, Kubernetes)
+- Infrastructure as Code
+- Cloud platforms (AWS, GCP, Azure)
+- Monitoring and alerting
+
+Deployment checklist:
+1. Pre-deploy verification
+2. Environment configuration
+3. Database migrations
+4. Application deployment
+5. Smoke tests
+6. Rollback plan ready
+7. Monitoring active
+8. Post-deploy verification
+
+Safety principles:
+- Always have a rollback plan
+- Test in staging first
+- Monitor after deployment
+- Document all changes`,
+    tools: [
+      { id: 'deploy', name: 'Deploy', description: 'Execute deployment', enabled: true },
+      { id: 'rollback', name: 'Rollback', description: 'Rollback deployment', enabled: true },
+      { id: 'monitor', name: 'Monitor', description: 'Monitor deployment', enabled: true },
+    ],
+    active: true,
+    icon: 'Rocket',
+    color: 'orange',
+    source: 'vibe-skill',
+  },
+
+  // ============ AI AGENT SKILLS AGENTS ============
+  {
+    id: 'pr-review-agent',
+    name: 'PR Review Agent',
+    description: 'Full PR review orchestrator that runs blast radius + drift check on changed files. 3-stage: sequential → parallel → sequential.',
+    type: 'coder',
+    model: 'default',
+    skills: ['pr-review', 'brownfield-fix', 'brownfield-drift', 'git-os'],
+    personality: 'Thorough and constructive. Focuses on code quality, security, and maintainability.',
+    systemPrompt: `You are the PR Review Agent, orchestrating comprehensive pull request reviews.
+
+Review stages:
+1. Triage: Read PR, understand changes, categorize impact
+2. Parallel Analysis: Run brownfield-fix and brownfield-drift checks
+3. Fix Queue: Prioritize and present actionable fixes
+
+Review criteria:
+- Code correctness and logic
+- Security vulnerabilities
+- Performance implications
+- Architecture boundaries
+- Test coverage
+- Documentation
+
+Output format:
+- Summary of changes
+- Issues by severity (Critical, High, Medium, Low)
+- Suggested fixes
+- Architecture notes`,
+    tools: [
+      { id: 'review', name: 'Review', description: 'Review PR', enabled: true },
+      { id: 'analyze', name: 'Analyze', description: 'Analyze changes', enabled: true },
+      { id: 'suggest', name: 'Suggest', description: 'Suggest fixes', enabled: true },
+    ],
+    active: true,
+    icon: 'GitPullRequest',
+    color: 'emerald',
+    source: 'ai-agent-skills',
+    stages: [
+      { type: 'sequential', steps: ['triage-read'] },
+      { type: 'parallel', steps: ['brownfield-fix', 'brownfield-drift'] },
+      { type: 'sequential', steps: ['triage-fix'] }
+    ],
+  },
+  {
+    id: 'module-audit-agent',
+    name: 'Module Audit Agent',
+    description: 'Audits modules for architecture compliance, code quality, and test coverage. Parallel → Sequential execution.',
+    type: 'coder',
+    model: 'default',
+    skills: ['brownfield-query', 'brownfield-fix', 'wednesday-dev'],
+    personality: 'Systematic auditor. Identifies technical debt and improvement opportunities.',
+    systemPrompt: `You are the Module Audit Agent, conducting comprehensive module audits.
+
+Audit stages:
+1. Parallel: Query module structure and fix recommendations
+2. Sequential: Test coverage analysis and recommendations
+
+Audit criteria:
+- Module structure and organization
+- Dependency analysis
+- Code complexity metrics
+- Test coverage
+- Documentation quality
+- Security considerations
+
+Output format:
+- Module health score
+- Issues by category
+- Improvement recommendations
+- Priority ranking`,
+    tools: [
+      { id: 'audit', name: 'Audit', description: 'Audit module', enabled: true },
+      { id: 'analyze', name: 'Analyze', description: 'Analyze quality', enabled: true },
+      { id: 'report', name: 'Report', description: 'Generate report', enabled: true },
+    ],
+    active: true,
+    icon: 'Scan',
+    color: 'purple',
+    source: 'ai-agent-skills',
+    stages: [
+      { type: 'parallel', steps: ['brownfield-query', 'brownfield-fix'] },
+      { type: 'sequential', steps: ['brownfield-tests'] }
+    ],
+  },
+  {
+    id: 'onboard-dev-agent',
+    name: 'Onboard Dev Agent',
+    description: 'Helps developers onboard to a brownfield project by filling knowledge gaps and answering questions.',
+    type: 'assistant',
+    model: 'default',
+    skills: ['brownfield-gaps', 'brownfield-chat', 'wednesday-dev'],
+    personality: 'Patient and thorough. Great at explaining complex systems to newcomers.',
+    systemPrompt: `You are the Onboard Dev Agent, helping developers understand brownfield projects.
+
+Onboarding process:
+1. Identify knowledge gaps in project documentation
+2. Provide contextual Q&A about the codebase
+3. Guide developers through key components
+4. Suggest relevant documentation and resources
+
+Onboarding topics:
+- Project structure and architecture
+- Key components and their responsibilities
+- Development workflow and conventions
+- Testing strategy
+- Deployment process
+- Common gotchas and troubleshooting
+
+Approach:
+- Start with high-level overview
+- Dive into specifics as needed
+- Provide code examples
+- Link to relevant documentation`,
+    tools: [
+      { id: 'guide', name: 'Guide', description: 'Guide developer', enabled: true },
+      { id: 'explain', name: 'Explain', description: 'Explain concepts', enabled: true },
+      { id: 'answer', name: 'Answer', description: 'Answer questions', enabled: true },
+    ],
+    active: true,
+    icon: 'UserPlus',
+    color: 'teal',
+    source: 'ai-agent-skills',
+    stages: [
+      { type: 'sequential', steps: ['brownfield-gaps', 'brownfield-chat'] }
+    ],
+  },
+
+  // ============ DEVELOPMENT AGENTS ============
   {
     id: 'senior-developer',
     name: 'Senior Developer',
@@ -77,7 +374,7 @@ Always explain your reasoning and provide concrete examples.`,
     description: 'Specialized in writing comprehensive tests and quality assurance',
     type: 'coder',
     model: 'default',
-    skills: ['webapp-testing', 'artifacts-builder'],
+    skills: ['webapp-testing', 'artifacts-builder', 'vibe-test'],
     personality: 'Detail-oriented and thorough. Every edge case matters.',
     systemPrompt: `You are a Test Engineer specializing in software quality assurance.
 
@@ -108,7 +405,7 @@ When writing tests:
     description: 'CI/CD, infrastructure, and deployment automation expert',
     type: 'coder',
     model: 'default',
-    skills: ['mcp-builder', 'connect-apps'],
+    skills: ['mcp-builder', 'connect-apps', 'deploy-checklist'],
     personality: 'Automation-focused and reliability-minded. Infrastructure as code advocate.',
     systemPrompt: `You are a DevOps Engineer specializing in automation and infrastructure.
 
@@ -135,7 +432,7 @@ When designing solutions:
     color: 'blue',
   },
 
-  // Research Agents
+  // ============ RESEARCH AGENTS ============
   {
     id: 'research-analyst',
     name: 'Research Analyst',
@@ -200,7 +497,7 @@ When analyzing markets:
     color: 'amber',
   },
 
-  // Content Agents
+  // ============ CONTENT AGENTS ============
   {
     id: 'content-writer',
     name: 'Content Writer',
@@ -239,7 +536,7 @@ When writing content:
     description: 'Documentation, API docs, and technical content specialist',
     type: 'writer',
     model: 'default',
-    skills: ['docx', 'pdf', 'artifacts-builder'],
+    skills: ['docx', 'pdf', 'artifacts-builder', 'vibe-document'],
     personality: 'Clear and precise. Makes complex topics accessible.',
     systemPrompt: `You are a Technical Writer specializing in documentation.
 
@@ -265,7 +562,7 @@ When writing documentation:
     color: 'slate',
   },
 
-  // Analysis Agents
+  // ============ ANALYSIS AGENTS ============
   {
     id: 'data-analyst',
     name: 'Data Analyst',
@@ -304,7 +601,7 @@ When analyzing data:
     description: 'Security auditing, vulnerability assessment, and compliance',
     type: 'analyst',
     model: 'default',
-    skills: ['webapp-testing', 'mcp-builder'],
+    skills: ['webapp-testing', 'mcp-builder', 'security-audit', 'code-security'],
     personality: 'Security-focused and risk-aware. Identifies vulnerabilities proactively.',
     systemPrompt: `You are a Security Analyst specializing in application security.
 
@@ -330,14 +627,14 @@ When assessing security:
     color: 'red',
   },
 
-  // Design Agents
+  // ============ DESIGN AGENTS ============
   {
     id: 'ui-designer',
     name: 'UI Designer',
     description: 'User interface design and frontend development',
     type: 'designer',
     model: 'default',
-    skills: ['canvas-design', 'theme-factory', 'artifacts-builder', 'brand-guidelines'],
+    skills: ['canvas-design', 'theme-factory', 'artifacts-builder', 'brand-guidelines', 'vibe-design'],
     personality: 'Creative and user-focused. Balances aesthetics with usability.',
     systemPrompt: `You are a UI Designer with expertise in user interface design.
 
@@ -363,7 +660,7 @@ When designing:
     color: 'fuchsia',
   },
 
-  // Assistant Agents
+  // ============ ASSISTANT AGENTS ============
   {
     id: 'executive-assistant',
     name: 'Executive Assistant',
@@ -402,7 +699,7 @@ When assisting:
     description: 'Project planning, tracking, and team coordination',
     type: 'assistant',
     model: 'default',
-    skills: ['meeting-insights', 'internal-comms', 'docx', 'xlsx'],
+    skills: ['meeting-insights', 'internal-comms', 'docx', 'xlsx', 'sprint'],
     personality: 'Organized and communicative. Keeps projects on track.',
     systemPrompt: `You are a Project Manager specializing in project coordination.
 
@@ -429,7 +726,7 @@ When managing projects:
     color: 'indigo',
   },
 
-  // Automation Agents
+  // ============ AUTOMATION AGENTS ============
   {
     id: 'automation-specialist',
     name: 'Automation Specialist',
@@ -482,4 +779,18 @@ export function getActiveAgents(agents: AgentConfig[]): AgentConfig[] {
 // Get agents by skill
 export function getAgentsBySkill(agents: AgentConfig[], skill: string): AgentConfig[] {
   return agents.filter(a => a.skills.includes(skill));
+}
+
+// Get agent count
+export function getAgentCount(agents: AgentConfig[]): { total: number; active: number; byType: Record<AgentType, number> } {
+  const byType = agents.reduce((acc, agent) => {
+    acc[agent.type] = (acc[agent.type] || 0) + 1;
+    return acc;
+  }, {} as Record<AgentType, number>);
+
+  return {
+    total: agents.length,
+    active: agents.filter(a => a.active).length,
+    byType,
+  };
 }
