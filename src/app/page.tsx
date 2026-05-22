@@ -11,6 +11,7 @@ import { SettingsPanel } from '@/components/cli/settings-panel';
 import { SkillsPanel } from '@/components/cli/skills-panel';
 import { MCPPanel } from '@/components/cli/mcp-panel';
 import { ExtensionsPanel } from '@/components/cli/extensions-panel';
+import { LocalModelsPanel } from '@/components/cli/local-models-panel';
 import { 
   Command, 
   Sparkles, 
@@ -22,7 +23,8 @@ import {
   PanelLeftClose,
   PanelLeft,
   Server,
-  Puzzle
+  Puzzle,
+  Cpu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,14 +34,15 @@ export default function CLIDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const navItems = [
-    { id: 'chat', label: 'Chat', icon: Command },
-    { id: 'skills', label: 'Skills', icon: Sparkles },
-    { id: 'mcp', label: 'MCP Servers', icon: Server },
-    { id: 'extensions', label: 'Extensions', icon: Puzzle },
-    { id: 'projects', label: 'Projects', icon: FolderTree },
-    { id: 'workflows', label: 'Workflows', icon: Workflow },
-    { id: 'agents', label: 'Agents', icon: Bot },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'chat', label: 'Chat', icon: Command, color: 'violet' },
+    { id: 'skills', label: 'Skills', icon: Sparkles, color: 'amber' },
+    { id: 'agents', label: 'Agents', icon: Bot, color: 'rose' },
+    { id: 'workflows', label: 'Workflows', icon: Workflow, color: 'orange' },
+    { id: 'mcp', label: 'MCP Servers', icon: Server, color: 'blue' },
+    { id: 'local-models', label: 'Local Models', icon: Cpu, color: 'cyan' },
+    { id: 'extensions', label: 'Extensions', icon: Puzzle, color: 'emerald' },
+    { id: 'projects', label: 'Projects', icon: FolderTree, color: 'teal' },
+    { id: 'settings', label: 'Settings', icon: Settings, color: 'slate' },
   ];
 
   return (
@@ -60,7 +63,7 @@ export default function CLIDashboard() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-2 space-y-1">
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -101,13 +104,14 @@ export default function CLIDashboard() {
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-sm text-slate-600 font-medium">
-              AI-CLI v1.0.0 | Ready
+              AI-CLI v2.0.0 | Ready
             </span>
           </div>
-          <div className="flex items-center gap-4 text-xs text-slate-500">
-            <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full font-medium">Model: Default</span>
-            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">28 Skills</span>
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">9 MCP Servers</span>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full font-medium">32 Skills</span>
+            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">12 Agents</span>
+            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">14 Workflows</span>
+            <span className="px-2 py-1 bg-cyan-100 text-cyan-700 rounded-full font-medium">9 MCP Servers</span>
           </div>
         </header>
 
@@ -126,6 +130,7 @@ export default function CLIDashboard() {
               {activeView === 'skills' && <SkillsPanel />}
               {activeView === 'mcp' && <MCPPanel />}
               {activeView === 'extensions' && <ExtensionsPanel />}
+              {activeView === 'local-models' && <LocalModelsPanel />}
               {activeView === 'projects' && <ProjectsPanel />}
               {activeView === 'workflows' && <WorkflowsPanel />}
               {activeView === 'agents' && <AgentsPanel />}
