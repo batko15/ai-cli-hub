@@ -12,10 +12,12 @@ import { SkillsPanel } from '@/components/cli/skills-panel';
 import { MCPPanel } from '@/components/cli/mcp-panel';
 import { ExtensionsPanel } from '@/components/cli/extensions-panel';
 import { LocalModelsPanel } from '@/components/cli/local-models-panel';
+import { CLIProvidersPanel } from '@/components/cli/cli-providers-panel';
 import { DEFAULT_SKILLS } from '@/lib/cli/skills-config';
 import { PRECONFIGURED_AGENTS } from '@/lib/cli/agents-config';
 import { PRECONFIGURED_WORKFLOWS } from '@/lib/cli/workflows-config';
 import { MCP_SERVERS } from '@/lib/cli/mcp-config';
+import { CLI_PROVIDERS } from '@/lib/cli/cli-providers-config';
 import { 
   Command, 
   Sparkles, 
@@ -28,7 +30,8 @@ import {
   PanelLeft,
   Server,
   Puzzle,
-  Cpu
+  Cpu,
+  Terminal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -42,6 +45,7 @@ export default function CLIDashboard() {
     { id: 'skills', label: 'Skills', icon: Sparkles, color: 'amber' },
     { id: 'agents', label: 'Agents', icon: Bot, color: 'rose' },
     { id: 'workflows', label: 'Workflows', icon: Workflow, color: 'orange' },
+    { id: 'cli-providers', label: 'CLI Tools', icon: Terminal, color: 'purple' },
     { id: 'mcp', label: 'MCP Servers', icon: Server, color: 'blue' },
     { id: 'local-models', label: 'Local Models', icon: Cpu, color: 'cyan' },
     { id: 'extensions', label: 'Extensions', icon: Puzzle, color: 'emerald' },
@@ -115,7 +119,8 @@ export default function CLIDashboard() {
             <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full font-medium">{DEFAULT_SKILLS.length} Skills</span>
             <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">{PRECONFIGURED_AGENTS.length} Agents</span>
             <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">{PRECONFIGURED_WORKFLOWS.length} Workflows</span>
-            <span className="px-2 py-1 bg-cyan-100 text-cyan-700 rounded-full font-medium">{MCP_SERVERS.length} MCP Servers</span>
+            <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">{CLI_PROVIDERS.length} CLIs</span>
+            <span className="px-2 py-1 bg-cyan-100 text-cyan-700 rounded-full font-medium">{MCP_SERVERS.length} MCP</span>
           </div>
         </header>
 
@@ -133,6 +138,7 @@ export default function CLIDashboard() {
               {activeView === 'chat' && <ChatPanel />}
               {activeView === 'skills' && <SkillsPanel />}
               {activeView === 'mcp' && <MCPPanel />}
+              {activeView === 'cli-providers' && <CLIProvidersPanel />}
               {activeView === 'extensions' && <ExtensionsPanel />}
               {activeView === 'local-models' && <LocalModelsPanel />}
               {activeView === 'projects' && <ProjectsPanel />}
