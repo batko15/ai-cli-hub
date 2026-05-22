@@ -73,8 +73,7 @@ export async function POST(request: NextRequest) {
 
     const response = await zai.chat.completions.createVision({
       messages: messages,
-      thinking: { type: 'disabled' },
-    });
+    } as any);
 
     const analysis = response.choices[0]?.message?.content || '';
 

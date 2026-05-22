@@ -12,6 +12,10 @@ import { SkillsPanel } from '@/components/cli/skills-panel';
 import { MCPPanel } from '@/components/cli/mcp-panel';
 import { ExtensionsPanel } from '@/components/cli/extensions-panel';
 import { LocalModelsPanel } from '@/components/cli/local-models-panel';
+import { DEFAULT_SKILLS } from '@/lib/cli/skills-config';
+import { PRECONFIGURED_AGENTS } from '@/lib/cli/agents-config';
+import { PRECONFIGURED_WORKFLOWS } from '@/lib/cli/workflows-config';
+import { MCP_SERVERS } from '@/lib/cli/mcp-config';
 import { 
   Command, 
   Sparkles, 
@@ -108,10 +112,10 @@ export default function CLIDashboard() {
             </span>
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full font-medium">32 Skills</span>
-            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">12 Agents</span>
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">14 Workflows</span>
-            <span className="px-2 py-1 bg-cyan-100 text-cyan-700 rounded-full font-medium">9 MCP Servers</span>
+            <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full font-medium">{DEFAULT_SKILLS.length} Skills</span>
+            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">{PRECONFIGURED_AGENTS.length} Agents</span>
+            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">{PRECONFIGURED_WORKFLOWS.length} Workflows</span>
+            <span className="px-2 py-1 bg-cyan-100 text-cyan-700 rounded-full font-medium">{MCP_SERVERS.length} MCP Servers</span>
           </div>
         </header>
 
