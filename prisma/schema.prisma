@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// AI CLI Models
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  path        String   @unique
+  type        String   @default("general") // general, web, mobile, api, design
+  status      String   @default("active")  // active, archived, deleted
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  files       File[]
+  chats       Chat[]
+  workflows   Workflow[]
+  agents      Agent[]
+}
+
+model File {
+  id          String   @id @default(cuid())
+  name        String
+  path        String
+  content     String?
+  type        String   @default("file") // file, folder
+  language    String?  // javascript, typescript, python, etc.
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([projectId, path])
+}
+
+model Chat {
+  id          String   @id @default(cuid())
+  title       String   @default("New Chat")
+  model       String   @default("default")
+  systemPrompt String?
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  messages    Message[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  role      String   // user, assistant, system
+  content   String
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  @@index([chatId])
+}
+
+model Workflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  steps       String   // JSON array of workflow steps
+  trigger     String   @default("manual") // manual, schedule, webhook
+  schedule    String?  // cron expression
+  active      Boolean  @default(true)
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  runs        WorkflowRun[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WorkflowRun {
+  id          String   @id @default(cuid())
+  status      String   @default("pending") // pending, running, completed, failed
+  result      String?  // JSON result
+  error       String?
+  workflowId  String
+  workflow    Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  
+  @@index([workflowId])
+}
+
+model Agent {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String   @default("general") // general, coder, designer, researcher
+  config      String   // JSON configuration
+  skills      String   // JSON array of skill names
+  active      Boolean  @default(true)
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  category    String   @default("general") // general, ai, web, code, design
+  config      String   // JSON configuration
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MCPServer {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  type        String   @default("stdio") // stdio, http, websocket
+  command     String?  // for stdio
+  url         String?  // for http/websocket
+  config      String   // JSON configuration
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Setting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
