@@ -1,0 +1,926 @@
+Hier ist deine **ultimative Schritt-für-Schritt-Anleitung** für **OpenClaw in Termux (Android)** – inklusive **Erweiterungen, Plugins, MCP-Server, Skills, Agents und Automatisierung**.
+Die Anleitung ist **modular aufgebaut**, sodass du nur die Teile umsetzt, die du brauchst.
+
+---
+
+---
+
+---
+
+# **📌 Inhaltsverzeichnis**
+1. [Grundinstallation (OpenClaw + Z.AI GLM-5.1)](#1-grundinstallation-openclaw--zai-glm-51)
+2. [Automatischer Start beim Booten](#2-automatischer-start-beim-booten)
+3. [Erweiterungen: Plugins installieren](#3-erweiterungen-plugins-installieren)
+4. [MCP-Server (Model Context Protocol) einbinden](#4-mcp-server-model-context-protocol-einbinden)
+5. [Skills mit ClawHub verwalten](#5-skills-mit-clawhub-verwalten)
+6. [Agents (Multi-Agenten-System) einrichten](#6-agents-multi-agenten-system-einrichten)
+7. [Termux-Optimierungen für bessere Performance](#7-termux-optimierungen-für-bessere-performance)
+8. [Fehlerbehebung & Debugging](#8-fehlerbehebung--debugging)
+9. [Beispiel: Vollautomatisiertes Setup-Skript](#9-beispiel-vollautomatisiertes-setup-skript)
+
+---
+
+---
+
+---
+
+# **1️⃣ Grundinstallation: OpenClaw + Z.AI GLM-5.1**
+*(Falls noch nicht geschehen – siehe vorherige Anleitung, hier kurz zusammengefasst)*
+
+### **Schritt 1: Termux vorbereiten**
+```bash
+# Termux aktualisieren
+pkg update -y && pkg upgrade -y
+
+# Speicherzugriff aktivieren
+termux-setup-storage
+
+# Abhängigkeiten installieren
+pkg install -y curl wget git python make clang nodejs tmux termux-api
+```
+
+### **Schritt 2: Node.js 22+ installieren**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+pkg install -y nodejs
+node --version  # Sollte v22.x.x anzeigen
+```
+
+### **Schritt 3: OpenClaw installieren**
+```bash
+curl -fsSL https://openclaw.ai/install.sh | bash
+```
+
+### **Schritt 4: OpenClaw konfigurieren**
+```bash
+# Onboarding starten
+openclaw onboard --install-daemon
+
+# Wähle:
+# - Yes (Bestätigung)
+# - Quick Start
+# - Z.AI als Provider
+# - Coding-Plan-Global
+# - Gib deine Z.AI API Key ein
+```
+
+### **Schritt 5: GLM-5.1 als Standardmodell setzen**
+```bash
+nano ~/.openclaw/openclaw.json
+```
+Füge oder bearbeite folgende Abschnitte:
+```json
+{
+  "models": {
+    "providers": {
+      "zai": {
+        "models": [
+          {
+            "id": "glm-5.1",
+            "name": "GLM-5.1",
+            "reasoning": true,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 204800,
+            "maxTokens": 131072
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "zai/glm-5.1",
+        "fallbacks": ["zai/glm-4.7", "zai/glm-4.6"]
+      },
+      "models": {
+        "zai/glm-5.1": { "alias": "GLM" }
+      }
+    }
+  }
+}
+```
+Speichern mit **Strg+O**, **Enter**, **Strg+X**.
+Dann:
+```bash
+openclaw gateway restart
+```
+
+### **Schritt 6: OpenClaw testen**
+```bash
+openclaw tui  # Terminal-UI starten
+openclaw status  # Gateway-Status prüfen
+```
+
+---
+---
+---
+
+# **2️⃣ Automatischer Start beim Booten**
+*(Damit OpenClaw immer läuft, auch nach einem Neustart)*
+
+### **Schritt 1: Termux:Boot installieren**
+- Installiere **[Termux:Boot](https://f-droid.org/en/packages/com.termux.boot/)** aus **F-Droid**.
+
+### **Schritt 2: Boot-Skript erstellen**
+```bash
+mkdir -p ~/.termux/boot
+nano ~/.termux/boot/start_openclaw.sh
+```
+Füge folgenden Code ein:
+
+
+
+#!/bin/bash
+
+# Log-Datei für Debugging
+LOG_FILE="$HOME/openclaw_boot.log"
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+log "=== Starte OpenClaw Boot-Skript ==="
+
+# Warte auf Netzwerk (60 Sekunden)
+log "Warte 60 Sekunden auf Netzwerk..."
+sleep 60
+
+# Aktiviere Wake-Lock (verhindert, dass Android Termux beendet)
+termux-wake-lock 2>> "$LOG_FILE"
+log "Wake-Lock aktiviert."
+
+# Prüfe, ob tmux installiert ist
+if ! command -v tmux &> /dev/null; then
+    log "FEHLER: tmux ist nicht installiert. Installiere es mit 'pkg install tmux'."
+    termux-notification --title "OpenClaw Fehler" --content "tmux fehlt!"
+    exit 1
+fi
+
+# Prüfe, ob OpenClaw installiert ist
+if ! command -v openclaw &> /dev/null; then
+    log "FEHLER: OpenClaw ist nicht installiert."
+    termux-notification --title "OpenClaw Fehler" --content "OpenClaw fehlt!"
+    exit 1
+fi
+
+# Starte OpenClaw Gateway in tmux (nur wenn nicht bereits läuft)
+if ! tmux has-session -t openclaw 2> /dev/null; then
+    log "Starte neue tmux-Session für OpenClaw Gateway..."
+    tmux new-session -d -s openclaw "openclaw gateway start 2>> $LOG_FILE"
+    termux-notification --title "OpenClaw" --content "Gateway wurde gestartet."
+else
+    log "tmux-Session 'openclaw' läuft bereits. Überspringe."
+fi
+
+# Optional: Starte TUI in einer separaten Session
+if ! tmux has-session -t openclaw_tui 2> /dev/null; then
+    log "Starte neue tmux-Session für OpenClaw TUI..."
+    tmux new-session -d -s openclaw_tui "openclaw tui 2>> $LOG_FILE"
+else
+    log "tmux-Session 'openclaw_tui' läuft bereits. Überspringe."
+fi
+
+log "=== OpenClaw Boot-Skript abgeschlossen ==="
+
+
+
+---
+### **Schritt 3: Skript ausführbar machen**
+```bash
+chmod +x ~/.termux/boot/start_openclaw.sh
+```
+
+### **Schritt 4: Android-Berechtigungen anpassen**
+1. Gehe zu **Einstellungen > Apps > Termux**:
+   - **Batterieoptimierung deaktivieren**
+   - **Autostart erlauben**
+   - **Hintergrunddaten erlauben**
+
+2. Teste das Skript manuell:
+   ```bash
+   ~/.termux/boot/start_openclaw.sh
+   ```
+   Überprüfe die Logs:
+   ```bash
+   cat ~/openclaw_boot.log
+   ```
+
+---
+---
+---
+
+# **3️⃣ Erweiterungen: Plugins installieren**
+OpenClaw unterstützt **Plugins**, um zusätzliche Funktionen hinzuzufügen (z. B. Voice-Call, Web-Suche, Dateiverwaltung).
+
+### **Schritt 1: Verfügbare Plugins anzeigen**
+```bash
+openclaw plugins list
+```
+
+### **Schritt 2: Offizielle Plugins installieren**
+| **Plugin** | **Befehl** | **Funktion** |
+|------------|------------|--------------|
+| Voice Call | `openclaw plugins install @openclaw/voice-call` | Sprach- und Audiofunktionen |
+| Web Search | `openclaw plugins install @openclaw/web-search` | Web-Suche direkt in OpenClaw |
+| File System | `openclaw plugins install @openclaw/fs` | Dateisystemzugriff |
+| GitHub | `openclaw plugins install @openclaw/github` | GitHub-Integration |
+| Calculator | `openclaw plugins install @openclaw/calculator` | Mathematische Berechnungen |
+
+**Beispiel: Voice-Call-Plugin installieren**
+```bash
+openclaw plugins install @openclaw/voice-call
+openclaw gateway restart
+```
+
+### **Schritt 3: Community-Plugins installieren**
+Falls du Plugins von Dritten nutzen möchtest:
+```bash
+# Beispiel: Ein Plugin von GitHub installieren
+git clone https://github.com/benutzer/plugin-name.git
+cd plugin-name
+npm install
+openclaw plugins install .
+openclaw gateway restart
+```
+
+### **Schritt 4: Plugins verwalten**
+| **Aktion** | **Befehl** |
+|------------|------------|
+| Plugins auflisten | `openclaw plugins list` |
+| Plugin deinstallieren | `openclaw plugins uninstall @openclaw/voice-call` |
+| Plugin aktualisieren | `openclaw plugins update @openclaw/voice-call` |
+
+---
+---
+---
+
+# **4️⃣ MCP-Server (Model Context Protocol) einbinden**
+MCP ermöglicht es OpenClaw, **externe Tools, APIs und Datenquellen** zu nutzen (z. B. Datenbanken, Web-APIs, lokale Dateien).
+
+### **Schritt 1: MCP-Server installieren**
+OpenClaw unterstützt MCP-Server über **Plugins oder manuelle Konfiguration**.
+
+#### **Option 1: Offizieller MCP-Plugin**
+```bash
+openclaw plugins install @openclaw/mcp
+openclaw gateway restart
+```
+
+#### **Option 2: Manuelle MCP-Integration**
+1. **Beispiel: MCP-Server für Dateisystem**
+   Installiere den **MCP-Dateisystem-Server**:
+   ```bash
+   npm install -g @modelcontextprotocol/server-filesystem
+   ```
+2. **MCP-Server starten**:
+   ```bash
+   mcp-server-filesystem --directory ~/storage/emulated/0/ 2> ~/mcp_filesystem.log &
+   ```
+   *(Hinweis: `~/storage/emulated/0/` ist der interne Android-Speicher in Termux.)*
+
+3. **OpenClaw für MCP konfigurieren**
+   Bearbeite `~/.openclaw/openclaw.json`:
+   ```bash
+   nano ~/.openclaw/openclaw.json
+   ```
+   Füge unter `"agents": { "defaults": { ... }` folgende Zeilen ein:
+   ```json
+   "mcp": {
+     "servers": {
+       "filesystem": {
+         "command": "mcp-server-filesystem",
+         "args": ["--directory", "/data/data/com.termux/files/home/storage/emulated/0/"]
+       }
+     }
+   }
+   ```
+4. **Gateway neu starten**:
+   ```bash
+   openclaw gateway restart
+   ```
+
+### **Schritt 2: MCP-Server testen**
+Starte OpenClaw TUI und frage:
+```
+"Liste alle Dateien in /storage/emulated/0/Download auf."
+```
+→ OpenClaw sollte die Dateien auflisten können.
+
+### **Schritt 3: Weitere MCP-Server**
+| **MCP-Server** | **Installation** | **Funktion** |
+|----------------|------------------|--------------|
+| **GitHub** | `npm install -g @modelcontextprotocol/server-github` | GitHub-Repositorys durchsuchen |
+| **SQLite** | `npm install -g @modelcontextprotocol/server-sqlite` | SQLite-Datenbanken abfragen |
+| **HTTP** | `npm install -g @modelcontextprotocol/server-http` | Web-APIs anbinden |
+| **Postgres** | `npm install -g @modelcontextprotocol/server-postgres` | PostgreSQL-Datenbanken |
+
+**Beispiel: GitHub-MCP-Server**
+```bash
+npm install -g @modelcontextprotocol/server-github
+```
+Füge in `openclaw.json` ein:
+```json
+"mcp": {
+  "servers": {
+    "github": {
+      "command": "mcp-server-github",
+      "env": {
+        "GITHUB_TOKEN": "dein_github_token"
+      }
+    }
+  }
+}
+```
+→ Jetzt kann OpenClaw GitHub-Repositorys durchsuchen.
+
+---
+---
+---
+
+# **5️⃣ Skills mit ClawHub verwalten**
+Skills sind **vorgefertigte Fähigkeiten**, die du OpenClaw hinzufügen kannst (z. B. Datenbank-Backups, Web-Scraping, Code-Analyse).
+
+### **Schritt 1: ClawHub installieren**
+```bash
+npm install -g clawhub
+```
+
+### **Schritt 2: Skills suchen und installieren**
+| **Aktion** | **Befehl** | **Beispiel** |
+|------------|------------|--------------|
+| Skills suchen | `clawhub search "suchbegriff"` | `clawhub search "postgres"` |
+| Skill installieren | `clawhub install skill-name` | `clawhub install postgres-backups` |
+| Installierte Skills auflisten | `clawhub list` | – |
+| Skill aktualisieren | `clawhub update skill-name` | `clawhub update postgres-backups` |
+| Alle Skills aktualisieren | `clawhub update --all` | – |
+| Skill deinstallieren | `clawhub uninstall skill-name` | `clawhub uninstall postgres-backups` |
+
+**Beispiel: Postgres-Backup-Skill installieren**
+```bash
+clawhub search "postgres"
+clawhub install postgres-backups
+openclaw gateway restart
+```
+
+### **Schritt 3: Eigene Skills erstellen**
+1. Erstelle ein Verzeichnis für deinen Skill:
+   ```bash
+   mkdir -p ~/.openclaw/skills/mein-skill
+   cd ~/.openclaw/skills/mein-skill
+   ```
+2. Erstelle eine `SKILL.md`-Datei:
+   ```bash
+   nano SKILL.md
+   ```
+   **Inhalt (Beispiel für einen "Wetter-Skill"):**
+   ```markdown
+   ---
+   name: wetter
+   description: Holt Wetterdaten für eine Stadt ab.
+   author: Kenan Tuncaydin
+   version: 1.0.0
+   ---
+
+   # Wetter-Skill
+   Dieser Skill ermöglicht es OpenClaw, Wetterdaten abzurufen.
+
+   ## Befehle
+   - `wetter <stadt>`: Zeigt das Wetter für die angegebene Stadt an.
+   ```
+
+3. Erstelle ein Skript für die Logik (z. B. `wetter.sh`):
+   ```bash
+   nano wetter.sh
+   ```
+   **Inhalt:**
+   ```bash
+   #!/bin/bash
+   STADT=$1
+   API_KEY="dein_openweathermap_api_key"  # Kostenlos unter https://openweathermap.org/ holen
+   URL="https://api.openweathermap.org/data/2.5/weather?q=$STADT&appid=$API_KEY&units=metric"
+
+   # Daten abrufen und formatieren
+   WETTER_DATEN=$(curl -s $URL | jq -r '.weather[0].description, .main.temp, .main.humidity')
+   echo "Wetter in $STADT: $WETTER_DATEN"
+   ```
+4. Mache das Skript ausführbar:
+   ```bash
+   chmod +x wetter.sh
+   ```
+5. Registriere den Skill in OpenClaw:
+   - Starte OpenClaw TUI und teste:
+     ```
+     wetter Berlin
+     ```
+
+---
+---
+---
+
+# **6️⃣ Agents (Multi-Agenten-System) einrichten**
+OpenClaw unterstützt **mehrere Agenten**, die gleichzeitig oder nacheinander arbeiten können (z. B. für komplexe Aufgaben).
+
+### **Schritt 1: Agenten in `openclaw.json` konfigurieren**
+Bearbeite `~/.openclaw/openclaw.json`:
+```bash
+nano ~/.openclaw/openclaw.json
+```
+Füge folgende **Agenten-Konfiguration** hinzu (oder passe sie an):
+
+
+
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "zai/glm-5.1",
+        "fallbacks": ["zai/glm-4.7"]
+      },
+      "skills": ["wetter", "postgres-backups"],
+      "plugins": ["@openclaw/voice-call", "@openclaw/fs"]
+    },
+    "custom": {
+      "code-agent": {
+        "model": "zai/glm-5.1",
+        "skills": ["code-review", "git"],
+        "description": "Agent für Code-Analyse und Git-Operationen."
+      },
+      "data-agent": {
+        "model": "zai/glm-4.7",
+        "skills": ["postgres-backups", "sqlite"],
+        "description": "Agent für Datenbank-Operationen."
+      },
+      "web-agent": {
+        "model": "zai/glm-5.1",
+        "skills": ["web-search", "scraping"],
+        "plugins": ["@openclaw/web-search"],
+        "description": "Agent für Web-Recherchen."
+      }
+    }
+  }
+}
+
+
+
+---
+### **Schritt 2: Agenten verwenden**
+1. **Agenten in der TUI auswählen:**
+   - Starte OpenClaw TUI:
+     ```bash
+     openclaw tui
+     ```
+   - Wähle mit `/agent` einen Agenten aus:
+     ```
+     /agent code-agent
+     ```
+     → Jetzt nutzt du den **Code-Agenten** mit seinen spezifischen Skills.
+
+2. **Agenten über die CLI starten:**
+   ```bash
+   openclaw chat --agent code-agent
+   ```
+
+### **Schritt 3: Agenten mit spezifischen Aufgaben**
+| **Agent** | **Aufgabe** | **Beispielbefehl** |
+|-----------|-------------|---------------------|
+| `code-agent` | Code analysieren | "Analysiere diesen Python-Code auf Fehler: [Code einfügen]" |
+| `data-agent` | Datenbank abfragen | "Zeige alle Tabellen in der Postgres-DB an." |
+| `web-agent` | Web-Recherche | "Suche nach den neuesten Nachrichten zu KI." |
+
+---
+---
+---
+
+# **7️⃣ Termux-Optimierungen für bessere Performance**
+### **Schritt 1: Termux für bessere Performance konfigurieren**
+1. **Swap-Speicher aktivieren (für mehr RAM):**
+   ```bash
+   pkg install -y swap-utils
+   dd if=/dev/zero of=~/swapfile bs=1M count=2048
+   mkswap ~/swapfile
+   swapon ~/swapfile
+   ```
+   → Fügt **2GB Swap-Speicher** hinzu (hilfreich für große Modelle).
+
+2. **Termux-Speicher erweitern:**
+   - Nutze eine **externe SD-Karte** (falls verfügbar):
+     ```bash
+     termux-setup-storage
+     ```
+   - Verschiebe OpenClaw-Daten auf die SD-Karte:
+     ```bash
+     mv ~/.openclaw /storage/emulated/0/openclaw
+     ln -s /storage/emulated/0/openclaw ~/.openclaw
+     ```
+
+3. **Node.js-Cache bereinigen:**
+   ```bash
+   npm cache clean --force
+   ```
+
+### **Schritt 2: OpenClaw-Cache verwalten**
+```bash
+# Cache anzeigen
+openclaw cache list
+
+# Cache bereinigen
+openclaw cache clear
+```
+
+### **Schritt 3: Termux im Hintergrund halten**
+- Installiere **[Termux:Tasker](https://play.google.com/store/apps/details?id=com.termux.tasker)** und richte eine Aufgabe ein, die Termux alle 5 Minuten "aufweckt":
+  ```bash
+  termux-wake-lock
+  sleep 300
+  termux-wake-unlock
+  ```
+  *(Erstelle eine Endlosschleife in Tasker.)*
+
+---
+---
+---
+
+# **8️⃣ Fehlerbehebung & Debugging**
+### **Häufige Probleme und Lösungen**
+| **Problem** | **Ursache** | **Lösung** |
+|-------------|-------------|------------|
+| `Error: Node.js version 22+ required` | Falsche Node.js-Version | `node --version` prüfen, ggf. neu installieren. |
+| `openclaw: command not found` | OpenClaw nicht in `PATH` | `export PATH=$HOME/.npm-global/bin:$PATH` |
+| `API Key not valid` | Ungültige Z.AI API Key | Key in [Z.AI Open Platform](https://open.z.ai/) prüfen. |
+| `Gateway not running` | Gateway nicht gestartet | `openclaw gateway start` |
+| `Port 3000 already in use` | Port-Konflikt | `pkill -f openclaw` und neu starten. |
+| `tmux: no sessions` | tmux-Session abgestürzt | `tmux new-session -d -s openclaw 'openclaw gateway start'` |
+| `MCP-Server not found` | MCP-Server nicht gestartet | `mcp-server-filesystem &` manuell starten. |
+| `Permission denied` | Berechtigungsproblem | `chmod +x ~/.termux/boot/start_openclaw.sh` |
+
+### **Debugging-Befehle**
+| **Befehl** | **Zweck** |
+|------------|-----------|
+| `openclaw logs` | Zeigt die letzten Logs an. |
+| `openclaw doctor` | Überprüft die Konfiguration auf Fehler. |
+| `cat ~/.openclaw/logs/gateway.log` | Detaillierte Gateway-Logs. |
+| `tmux attach -t openclaw` | Attache an die tmux-Session, um Fehler live zu sehen. |
+| `journalctl -u openclaw` | System-Logs (falls verfügbar). |
+
+---
+---
+---
+
+# **9️⃣ Beispiel: Vollautomatisiertes Setup-Skript**
+Hier ist ein **komplettes Skript**, das **alles** (OpenClaw, Plugins, MCP, Skills, Agenten, Boot-Start) in einem Durchgang einrichtet.
+
+
+
+#!/bin/bash
+
+# =============================================
+# Vollautomatisiertes OpenClaw Setup für Termux
+# Inkl. Plugins, MCP, Skills, Agenten, Boot-Start
+# =============================================
+
+# Farbcodes für bessere Lesbarkeit
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Log-Funktion
+log() {
+    echo -e "${GREEN}[✓]${NC} $1"
+}
+warn() {
+    echo -e "${YELLOW}[!]${NC} $1"
+}
+error() {
+    echo -e "${RED}[✗]${NC} $1"
+}
+
+# 1. Termux vorbereiten
+log "Termux vorbereiten..."
+pkg update -y && pkg upgrade -y
+pkg install -y curl wget git python make clang nodejs tmux termux-api swap-utils jq
+
+# 2. Node.js 22 installieren
+log "Node.js 22 installieren..."
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+pkg install -y nodejs
+node --version | grep "v22" > /dev/null || { error "Node.js 22 nicht installiert!"; exit 1; }
+
+# 3. Swap-Speicher aktivieren (2GB)
+log "Swap-Speicher aktivieren..."
+dd if=/dev/zero of=~/swapfile bs=1M count=2048 2>/dev/null
+mkswap ~/swapfile 2>/dev/null
+swapon ~/swapfile 2>/dev/null
+
+# 4. OpenClaw installieren
+log "OpenClaw installieren..."
+curl -fsSL https://openclaw.ai/install.sh | bash
+
+# 5. OpenClaw konfigurieren
+log "OpenClaw konfigurieren..."
+if [ ! -f ~/.openclaw/openclaw.json ]; then
+    # Standardkonfiguration erstellen
+    mkdir -p ~/.openclaw
+    cat > ~/.openclaw/openclaw.json << 'EOF'
+{
+  "models": {
+    "providers": {
+      "zai": {
+        "models": [
+          {
+            "id": "glm-5.1",
+            "name": "GLM-5.1",
+            "reasoning": true,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 204800,
+            "maxTokens": 131072
+          },
+          {
+            "id": "glm-4.7",
+            "name": "GLM-4.7",
+            "reasoning": true,
+            "input": ["text"],
+            "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+            "contextWindow": 204800,
+            "maxTokens": 131072
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "zai/glm-5.1",
+        "fallbacks": ["zai/glm-4.7"]
+      },
+      "skills": [],
+      "plugins": []
+    },
+    "custom": {
+      "code-agent": {
+        "model": "zai/glm-5.1",
+        "skills": ["code-review"],
+        "description": "Agent für Code-Analyse."
+      },
+      "data-agent": {
+        "model": "zai/glm-4.7",
+        "skills": ["postgres-backups"],
+        "description": "Agent für Datenbanken."
+      },
+      "web-agent": {
+        "model": "zai/glm-5.1",
+        "skills": ["web-search"],
+        "plugins": ["@openclaw/web-search"],
+        "description": "Agent für Web-Recherchen."
+      }
+    }
+  },
+  "mcp": {
+    "servers": {
+      "filesystem": {
+        "command": "mcp-server-filesystem",
+        "args": ["--directory", "/data/data/com.termux/files/home/storage/emulated/0/"]
+      }
+    }
+  }
+}
+EOF
+    log "Standardkonfiguration erstellt."
+else
+    log "Vorhandene Konfiguration wird beibehalten."
+fi
+
+# 6. Onboarding (manuell durchführen, da API Key benötigt wird)
+warn "Führe jetzt manuell 'openclaw onboard --install-daemon' aus und wähle Z.AI + GLM Coding Plan."
+warn "Gib deine Z.AI API Key ein, wenn du dazu aufgefordert wirst."
+read -p "Drücke Enter, wenn das Onboarding abgeschlossen ist... " -r
+
+# 7. Plugins installieren
+log "Plugins installieren..."
+openclaw plugins install @openclaw/voice-call
+openclaw plugins install @openclaw/web-search
+openclaw plugins install @openclaw/fs
+openclaw plugins install @openclaw/github
+openclaw plugins install @openclaw/mcp
+
+# 8. ClawHub installieren und Skills hinzufügen
+log "ClawHub und Skills installieren..."
+npm install -g clawhub
+clawhub install postgres-backups
+clawhub install code-review
+clawhub install web-search
+
+# 9. MCP-Server installieren
+log "MCP-Server installieren..."
+npm install -g @modelcontextprotocol/server-filesystem
+npm install -g @modelcontextprotocol/server-github
+npm install -g @modelcontextprotocol/server-http
+
+# 10. Boot-Skript erstellen
+log "Boot-Skript erstellen..."
+mkdir -p ~/.termux/boot
+cat > ~/.termux/boot/start_openclaw.sh << 'EOF'
+#!/bin/bash
+
+LOG_FILE="$HOME/openclaw_boot.log"
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+log "=== Starte OpenClaw Boot-Skript ==="
+
+# Warte auf Netzwerk
+sleep 60
+
+# Wake-Lock aktivieren
+termux-wake-lock 2>> "$LOG_FILE"
+
+# Starte MCP-Server
+mcp-server-filesystem --directory /data/data/com.termux/files/home/storage/emulated/0/ 2>> "$LOG_FILE" &
+mcp-server-github 2>> "$LOG_FILE" &
+
+# Starte OpenClaw Gateway
+if ! tmux has-session -t openclaw 2> /dev/null; then
+    tmux new-session -d -s openclaw "openclaw gateway start 2>> $LOG_FILE"
+    termux-notification --title "OpenClaw" --content "Gateway gestartet."
+fi
+
+log "=== OpenClaw Boot-Skript abgeschlossen ==="
+EOF
+chmod +x ~/.termux/boot/start_openclaw.sh
+
+# 11. Gateway neu starten
+log "Gateway neu starten..."
+openclaw gateway restart
+
+# 12. Erfolgsmeldung
+log "Installation abgeschlossen!"
+warn "Starte dein Gerät neu, um den automatischen Start zu testen."
+warn "Führe 'openclaw tui' aus, um OpenClaw zu starten."
+warn "Überprüfe die Logs mit 'cat ~/openclaw_boot.log'."
+
+
+
+---
+---
+### **Anleitung für das Skript:**
+1. Kopiere den Code in eine Datei:
+   ```bash
+   nano openclaw_full_setup.sh
+   ```
+2. Füge den Code ein, speichere mit **Strg+O**, **Enter**, **Strg+X**.
+3. Mache das Skript ausführbar:
+   ```bash
+   chmod +x openclaw_full_setup.sh
+   ```
+4. Führe das Skript aus:
+   ```bash
+   ./openclaw_full_setup.sh
+   ```
+5. **Wichtig:**
+   - Wenn das Skript bei **Schritt 6 (Onboarding)** anhält, führe manuell aus:
+     ```bash
+     openclaw onboard --install-daemon
+     ```
+     → Wähle **Z.AI**, **Coding-Plan-Global** und gib deine **API Key** ein.
+   - Drücke dann **Enter**, um das Skript fortzusetzen.
+
+---
+---
+---
+
+# **🎯 Zusammenfassung: Was du jetzt hast**
+| **Komponente** | **Status** | **Befehl zum Testen** |
+|----------------|------------|-----------------------|
+| OpenClaw + GLM-5.1 | ✅ Installiert | `openclaw tui` |
+| Automatischer Start | ✅ Eingerichtet | Gerät neu starten |
+| Plugins | ✅ Installiert | `openclaw plugins list` |
+| MCP-Server | ✅ Eingerichtet | `mcp-server-filesystem &` |
+| Skills | ✅ Installiert | `clawhub list` |
+| Agenten | ✅ Konfiguriert | `/agent code-agent` in TUI |
+| Performance-Optimierungen | ✅ Aktiviert | `free -h` (Swap prüfen) |
+
+---
+---
+---
+
+# **🚀 Nächste Schritte (optional)**
+1. **Eigene MCP-Server erstellen:**
+   - Nutze das [MCP-SDK](https://github.com/modelcontextprotocol/sdk), um eigene Server zu entwickeln (z. B. für deine eigenen APIs).
+   - Beispiel: Ein MCP-Server für deine **Smart-Home-API** (z. B. Home Assistant).
+
+2. **OpenClaw mit externen Tools verbinden:**
+   - **Home Assistant:** Nutze den [MCP-HomeAssistant-Server](https://github.com/modelcontextprotocol/server-homeassistant).
+   - **Notion:** Nutze den [MCP-Notion-Server](https://github.com/modelcontextprotocol/server-notion).
+
+3. **OpenClaw als Web-App nutzen:**
+   - Starte das Dashboard:
+     ```bash
+     openclaw dashboard
+     ```
+   - Nutze **ngrok**, um es von überall zugänglich zu machen:
+     ```bash
+     ngrok http 3000
+     ```
+
+4. **OpenClaw mit Termux:X11 nutzen:**
+   - Installiere [Termux:X11](https://f-droid.org/en/packages/com.termux.x11/) und öffne das Dashboard in einem Fenster.
+
+5. **OpenClaw mit Tasker automatisieren:**
+   - Erstelle **Tasker-Aufgaben**, um OpenClaw bei bestimmten Ereignissen zu starten (z. B. wenn du zu Hause bist).
+
+---
+---
+---
+# **❓ Häufige Fragen & Antworten**
+### **Frage: Wie kann ich OpenClaw mit meiner eigenen API verbinden?**
+**Antwort:**
+1. Erstelle einen **MCP-Server** für deine API (z. B. mit Python oder Node.js).
+2. Registriere den Server in `openclaw.json`:
+   ```json
+   "mcp": {
+     "servers": {
+       "meine-api": {
+         "command": "node",
+         "args": ["/pfad/zu/deinem/mcp-server.js"]
+       }
+     }
+   }
+   ```
+3. Starte den Server und OpenClaw neu.
+
+### **Frage: Kann ich OpenClaw mit anderen LLMs (z. B. Mistral, Llama) nutzen?**
+**Antwort:**
+Ja! OpenClaw unterstützt **mehrere Provider**. Füge in `openclaw.json` weitere Provider hinzu:
+```json
+"models": {
+  "providers": {
+    "zai": { ... },
+    "mistral": {
+      "apiKey": "dein_mistral_api_key",
+      "models": [
+        { "id": "mistral-large", "name": "Mistral Large" }
+      ]
+    },
+    "ollama": {
+      "baseUrl": "http://localhost:11434",
+      "models": [
+        { "id": "llama3", "name": "Llama 3" }
+      ]
+    }
+  }
+}
+```
+→ Dann kannst du zwischen den Modellen wechseln.
+
+### **Frage: Wie kann ich OpenClaw mit meiner lokalen Ollama-Instanz verbinden?**
+**Antwort:**
+1. Installiere **Ollama** in Termux:
+   ```bash
+   curl -fsSL https://ollama.com/install.sh | bash
+   ```
+2. Lade ein Modell herunter:
+   ```bash
+   ollama pull llama3
+   ```
+3. Füge Ollama als Provider in `openclaw.json` hinzu:
+   ```json
+   "models": {
+     "providers": {
+       "ollama": {
+         "baseUrl": "http://localhost:11434",
+         "models": [
+           { "id": "llama3", "name": "Llama 3" }
+         ]
+       }
+     }
+   }
+   ```
+4. Starte Ollama im Hintergrund:
+   ```bash
+   ollama serve &
+   ```
+5. Wähle in OpenClaw das Modell `ollama/llama3` aus.
+
+---
+---
+---
+# **🔚 Fertig!**
+Du hast jetzt ein **voll funktionsfähiges OpenClaw-System** auf deinem Android-Gerät mit:
+✅ **Automatischem Start**
+✅ **Plugins (Voice, Web-Suche, Dateisystem, GitHub)**
+✅ **MCP-Server (Dateisystem, GitHub, HTTP)**
+✅ **Skills (Postgres-Backups, Code-Review, Web-Suche)**
+✅ **Multi-Agenten-System (Code, Daten, Web)**
+✅ **Performance-Optimierungen (Swap, Cache)**
+
+**Frage:**
+Möchtest du eine **Anleitung für ein spezifisches Szenario**?
+- [ ] **OpenClaw mit Home Assistant verbinden**
+- [ ] **Eigenen MCP-Server für eine REST-API erstellen**
+- [ ] **OpenClaw als Chatbot für deine Website nutzen**
+- [ ] **OpenClaw mit WhatsApp oder Telegram verbinden**
+- [ ] **OpenClaw für automatisierte Aufgaben (z. B. Backups) nutzen**

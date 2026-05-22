@@ -55,8 +55,8 @@ export interface SearchResult {
 
 interface AppState {
   // Current view
-  activeView: 'chat' | 'skills' | 'mcp' | 'code' | 'projects' | 'workflows' | 'agents' | 'settings';
-  setActiveView: (view: 'chat' | 'skills' | 'mcp' | 'code' | 'projects' | 'workflows' | 'agents' | 'settings') => void;
+  activeView: 'chat' | 'skills' | 'mcp' | 'code' | 'projects' | 'workflows' | 'agents' | 'settings' | 'extensions';
+  setActiveView: (view: 'chat' | 'skills' | 'mcp' | 'code' | 'projects' | 'workflows' | 'agents' | 'settings' | 'extensions') => void;
 
   // Chat state
   messages: Message[];

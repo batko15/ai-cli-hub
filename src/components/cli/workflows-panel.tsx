@@ -5,17 +5,17 @@ import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   Workflow, 
   Plus, 
   Play, 
   Pause, 
-  Trash2, 
-  Clock,
+  Trash2,
   Zap,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
 import {
   Dialog,
@@ -187,28 +187,28 @@ export function WorkflowsPanel() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full p-4">
+    <div className="flex-1 flex flex-col h-full p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-green-400">Workflows</h2>
-          <p className="text-sm text-green-600">Automatisiere deine Tasks</p>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">Workflows</h2>
+          <p className="text-sm text-slate-500 mt-1">Automatisiere deine Tasks</p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30">
+            <Button className="bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40">
               <Plus className="w-4 h-4 mr-2" />
               Neuer Workflow
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-gray-950 border-green-900/50 text-green-400 max-w-2xl">
+          <DialogContent className="bg-white border-slate-200 text-slate-700 max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Neuen Workflow erstellen</DialogTitle>
+              <DialogTitle className="text-slate-800">Neuen Workflow erstellen</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-4">
               {/* Templates */}
               <div className="space-y-2">
-                <Label className="text-green-600">Vorlagen</Label>
+                <Label className="text-slate-600">Vorlagen</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {WORKFLOW_TEMPLATES.map((template, index) => (
                     <button
@@ -222,14 +222,14 @@ export function WorkflowsPanel() {
                           trigger: template.trigger
                         });
                       }}
-                      className={`p-3 rounded-lg border text-left transition-colors ${
+                      className={`p-3 rounded-xl border text-left transition-all ${
                         selectedTemplate === index
-                          ? 'border-green-500 bg-green-500/10'
-                          : 'border-green-900/50 hover:border-green-500/50'
+                          ? 'border-amber-500 bg-amber-50 shadow-sm'
+                          : 'border-slate-200 hover:border-amber-300 hover:bg-amber-50/50'
                       }`}
                     >
-                      <p className="text-sm font-medium text-green-400">{template.name}</p>
-                      <p className="text-xs text-green-600 mt-1">{template.description}</p>
+                      <p className="text-sm font-medium text-slate-700">{template.name}</p>
+                      <p className="text-xs text-slate-500 mt-1">{template.description}</p>
                     </button>
                   ))}
                 </div>
@@ -237,24 +237,24 @@ export function WorkflowsPanel() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-green-600">Name</Label>
+                  <Label className="text-slate-600">Name</Label>
                   <Input
                     value={newWorkflow.name}
                     onChange={(e) => setNewWorkflow({ ...newWorkflow, name: e.target.value })}
                     placeholder="Workflow-Name"
-                    className="bg-gray-900 border-green-900/50 text-green-400"
+                    className="bg-slate-50 border-slate-200 text-slate-700"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-green-600">Trigger</Label>
+                  <Label className="text-slate-600">Trigger</Label>
                   <Select
                     value={newWorkflow.trigger}
                     onValueChange={(value) => setNewWorkflow({ ...newWorkflow, trigger: value })}
                   >
-                    <SelectTrigger className="bg-gray-900 border-green-900/50 text-green-400">
+                    <SelectTrigger className="bg-slate-50 border-slate-200 text-slate-700">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-900 border-green-900/50 text-green-400">
+                    <SelectContent className="bg-white border-slate-200">
                       <SelectItem value="manual">Manuell</SelectItem>
                       <SelectItem value="schedule">Zeitplan</SelectItem>
                       <SelectItem value="webhook">Webhook</SelectItem>
@@ -264,18 +264,18 @@ export function WorkflowsPanel() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-green-600">Beschreibung</Label>
+                <Label className="text-slate-600">Beschreibung</Label>
                 <Textarea
                   value={newWorkflow.description}
                   onChange={(e) => setNewWorkflow({ ...newWorkflow, description: e.target.value })}
                   placeholder="Workflow-Beschreibung"
-                  className="bg-gray-900 border-green-900/50 text-green-400"
+                  className="bg-slate-50 border-slate-200 text-slate-700"
                 />
               </div>
 
               <Button
                 onClick={createWorkflow}
-                className="w-full bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30"
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white"
               >
                 Workflow erstellen
               </Button>
@@ -287,47 +287,54 @@ export function WorkflowsPanel() {
       {/* Workflows List */}
       <ScrollArea className="flex-1">
         {loading ? (
-          <div className="text-center py-12 text-green-600">Lade Workflows...</div>
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
+            <span className="ml-2 text-slate-500">Lade Workflows...</span>
+          </div>
         ) : workflows.length === 0 ? (
           <div className="text-center py-12">
-            <Workflow className="w-16 h-16 mx-auto mb-4 text-green-700" />
-            <p className="text-green-600">Keine Workflows vorhanden</p>
-            <p className="text-sm text-green-700 mt-2">Erstelle deinen ersten Workflow!</p>
+            <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center">
+              <Workflow className="w-10 h-10 text-slate-400" />
+            </div>
+            <p className="text-slate-500">Keine Workflows vorhanden</p>
+            <p className="text-sm text-slate-400 mt-2">Erstelle deinen ersten Workflow!</p>
           </div>
         ) : (
           <div className="space-y-3">
             {workflows.map((workflow) => (
               <Card
                 key={workflow.id}
-                className="bg-gray-900/50 border-green-900/50 hover:border-green-500/50 transition-colors"
+                className={`bg-white transition-all hover:shadow-md ${
+                  workflow.active ? 'border-amber-300' : 'border-slate-200'
+                }`}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${
+                      <div className={`p-2.5 rounded-xl ${
                         workflow.active 
-                          ? 'bg-green-500/20 text-green-400' 
-                          : 'bg-gray-800 text-green-600'
+                          ? 'bg-amber-100 text-amber-600' 
+                          : 'bg-slate-100 text-slate-400'
                       }`}>
                         {getTriggerIcon(workflow.trigger)}
                       </div>
                       <div>
-                        <h3 className="font-medium text-green-400">{workflow.name}</h3>
-                        <p className="text-sm text-green-600">{workflow.description || 'Keine Beschreibung'}</p>
+                        <h3 className="font-semibold text-slate-700">{workflow.name}</h3>
+                        <p className="text-sm text-slate-500">{workflow.description || 'Keine Beschreibung'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="border-green-900/50 text-green-600">
+                      <Badge variant="outline" className="bg-slate-50 border-slate-200 text-slate-600">
                         {workflow.steps.length} Steps
                       </Badge>
-                      <Badge variant="outline" className="border-green-900/50 text-green-600">
+                      <Badge variant="outline" className="bg-slate-50 border-slate-200 text-slate-600">
                         {workflow._count?.runs || 0} Runs
                       </Badge>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleWorkflow(workflow.id, workflow.active, workflow.name)}
-                        className={workflow.active ? 'text-yellow-400' : 'text-green-400'}
+                        className={workflow.active ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'}
                       >
                         {workflow.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                       </Button>
@@ -335,7 +342,7 @@ export function WorkflowsPanel() {
                         variant="ghost"
                         size="sm"
                         onClick={() => deleteWorkflow(workflow.id, workflow.name)}
-                        className="text-red-400 hover:text-red-300"
+                        className="text-red-400 hover:text-red-500 hover:bg-red-50"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

@@ -10,6 +10,7 @@ import { AgentsPanel } from '@/components/cli/agents-panel';
 import { SettingsPanel } from '@/components/cli/settings-panel';
 import { SkillsPanel } from '@/components/cli/skills-panel';
 import { MCPPanel } from '@/components/cli/mcp-panel';
+import { ExtensionsPanel } from '@/components/cli/extensions-panel';
 import { 
   Command, 
   Sparkles, 
@@ -20,7 +21,8 @@ import {
   Wand2,
   PanelLeftClose,
   PanelLeft,
-  Server
+  Server,
+  Puzzle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,7 +34,8 @@ export default function CLIDashboard() {
   const navItems = [
     { id: 'chat', label: 'Chat', icon: Command },
     { id: 'skills', label: 'Skills', icon: Sparkles },
-    { id: 'mcp', label: 'MCP', icon: Server },
+    { id: 'mcp', label: 'MCP Servers', icon: Server },
+    { id: 'extensions', label: 'Extensions', icon: Puzzle },
     { id: 'projects', label: 'Projects', icon: FolderTree },
     { id: 'workflows', label: 'Workflows', icon: Workflow },
     { id: 'agents', label: 'Agents', icon: Bot },
@@ -40,18 +43,18 @@ export default function CLIDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-green-400 font-mono flex">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-800 font-sans flex">
       {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-950 border-r border-green-900/50 flex flex-col transition-all duration-300`}>
+      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-white border-r border-slate-200 flex flex-col transition-all duration-300 shadow-sm`}>
         {/* Logo */}
-        <div className="p-4 border-b border-green-900/50 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-green-500/20 border border-green-500/50 flex items-center justify-center">
-            <Wand2 className="w-5 h-5 text-green-400" />
+        <div className="p-4 border-b border-slate-200 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/25">
+            <Wand2 className="w-5 h-5 text-white" />
           </div>
           {!sidebarCollapsed && (
             <div>
-              <h1 className="text-lg font-bold text-green-400">AI-CLI</h1>
-              <p className="text-xs text-green-600">Terminal Assistant</p>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">AI-CLI</h1>
+              <p className="text-xs text-slate-500">Terminal Assistant</p>
             </div>
           )}
         </div>
@@ -62,25 +65,25 @@ export default function CLIDashboard() {
             <button
               key={item.id}
               onClick={() => setActiveView(item.id as any)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                 activeView === item.id
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                  : 'text-green-600 hover:bg-green-500/10 hover:text-green-400'
+                  ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
+              {!sidebarCollapsed && <span className="text-sm font-medium">{item.label}</span>}
             </button>
           ))}
         </nav>
 
         {/* Collapse Button */}
-        <div className="p-2 border-t border-green-900/50">
+        <div className="p-2 border-t border-slate-200">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="w-full text-green-600 hover:text-green-400 hover:bg-green-500/10"
+            className="w-full text-slate-500 hover:text-slate-700 hover:bg-slate-100"
           >
             {sidebarCollapsed ? (
               <PanelLeft className="w-4 h-4" />
@@ -94,22 +97,22 @@ export default function CLIDashboard() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <header className="h-12 bg-gray-950 border-b border-green-900/50 flex items-center justify-between px-4">
+        <header className="h-14 bg-white/80 backdrop-blur-sm border-b border-slate-200 flex items-center justify-between px-4 shadow-sm">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-sm text-green-600">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-sm text-slate-600 font-medium">
               AI-CLI v1.0.0 | Ready
             </span>
           </div>
-          <div className="flex items-center gap-4 text-xs text-green-600">
-            <span>Model: Default</span>
-            <span>|</span>
-            <span>28 Skills | 9 MCP Servers</span>
+          <div className="flex items-center gap-4 text-xs text-slate-500">
+            <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded-full font-medium">Model: Default</span>
+            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full font-medium">28 Skills</span>
+            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">9 MCP Servers</span>
           </div>
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 flex overflow-hidden">
+        <main className="flex-1 flex overflow-hidden bg-slate-50/50">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeView}
@@ -122,6 +125,7 @@ export default function CLIDashboard() {
               {activeView === 'chat' && <ChatPanel />}
               {activeView === 'skills' && <SkillsPanel />}
               {activeView === 'mcp' && <MCPPanel />}
+              {activeView === 'extensions' && <ExtensionsPanel />}
               {activeView === 'projects' && <ProjectsPanel />}
               {activeView === 'workflows' && <WorkflowsPanel />}
               {activeView === 'agents' && <AgentsPanel />}

@@ -4,22 +4,21 @@ import { useState, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { 
   Server, 
-  Plus, 
   RefreshCw,
-  Terminal,
-  Globe,
+  Info,
   Database,
   Brain,
   Search,
   MessageSquare,
   Map,
   Play,
-  Settings
+  Globe,
+  Loader2
 } from 'lucide-react';
 
 interface MCPServer {
@@ -46,14 +45,14 @@ const SERVER_ICONS: Record<string, any> = {
   'default': Server,
 };
 
-const CATEGORY_COLORS: Record<string, string> = {
-  'filesystem': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  'github': 'bg-gray-500/20 text-gray-400 border-gray-500/30',
-  'memory': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  'search': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  'browser': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  'communication': 'bg-green-500/20 text-green-400 border-green-500/30',
-  'default': 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  'filesystem': { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200' },
+  'github': { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' },
+  'memory': { bg: 'bg-violet-100', text: 'text-violet-700', border: 'border-violet-200' },
+  'search': { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
+  'browser': { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
+  'communication': { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200' },
+  'default': { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' },
 };
 
 export function MCPPanel() {
@@ -104,19 +103,19 @@ export function MCPPanel() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full p-4">
+    <div className="flex-1 flex flex-col h-full p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-green-400">MCP Servers</h2>
-          <p className="text-sm text-green-600">Model Context Protocol Integration</p>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">MCP Servers</h2>
+          <p className="text-sm text-slate-500 mt-1">Model Context Protocol Integration</p>
         </div>
         <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={fetchServers}
-            className="border-green-900/50 text-green-400 hover:bg-green-500/10"
+            className="border-slate-200 text-slate-600 hover:bg-slate-100"
           >
             <RefreshCw className="w-4 h-4" />
           </Button>
@@ -124,13 +123,15 @@ export function MCPPanel() {
       </div>
 
       {/* Info */}
-      <Card className="bg-gray-900/30 border-green-900/50 mb-4">
+      <Card className="bg-blue-50 border-blue-200 mb-4">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <Terminal className="w-5 h-5 text-green-400 mt-0.5" />
-            <div className="text-sm text-green-600">
-              <p className="font-medium text-green-400 mb-1">Was ist MCP?</p>
-              <p>Model Context Protocol ermöglicht die Integration externer Tools und Datenquellen. 
+            <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
+              <Info className="w-4 h-4" />
+            </div>
+            <div className="text-sm text-blue-700">
+              <p className="font-medium mb-1">Was ist MCP?</p>
+              <p className="text-blue-600">Model Context Protocol ermöglicht die Integration externer Tools und Datenquellen. 
               Aktiviere Server um zusätzliche Fähigkeiten freizuschalten.</p>
             </div>
           </div>
@@ -140,43 +141,47 @@ export function MCPPanel() {
       {/* Servers List */}
       <ScrollArea className="flex-1">
         {loading ? (
-          <div className="text-center py-12 text-green-600">Lade MCP Server...</div>
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+            <span className="ml-2 text-slate-500">Lade MCP Server...</span>
+          </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {servers.map((server) => {
               const Icon = getServerIcon(server.name);
+              const colors = getCategoryColor(server.name);
               return (
                 <Card
                   key={server.id}
-                  className={`bg-gray-900/50 transition-all ${
+                  className={`bg-white transition-all hover:shadow-md ${
                     server.enabled 
-                      ? 'border-green-500/50' 
-                      : 'border-green-900/50 opacity-60'
+                      ? `border-2 ${colors.border}` 
+                      : 'border-slate-200 opacity-70'
                   }`}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${
+                        <div className={`p-2.5 rounded-xl ${
                           server.enabled 
-                            ? 'bg-green-500/20 text-green-400' 
-                            : 'bg-gray-800 text-green-600'
+                            ? `${colors.bg} ${colors.text}` 
+                            : 'bg-slate-100 text-slate-400'
                         }`}>
                           <Icon className="w-5 h-5" />
                         </div>
                         <div>
-                          <h3 className="font-medium text-green-400">{server.name}</h3>
-                          <p className="text-xs text-green-600">{server.description || 'Keine Beschreibung'}</p>
+                          <h3 className="font-semibold text-slate-700">{server.name}</h3>
+                          <p className="text-xs text-slate-500">{server.description || 'Keine Beschreibung'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Badge variant="outline" className={`text-xs ${getCategoryColor(server.name)}`}>
+                        <Badge variant="outline" className={`text-xs ${colors.bg} ${colors.text} ${colors.border}`}>
                           {server.type}
                         </Badge>
                         <Switch
                           checked={server.enabled}
                           onCheckedChange={() => toggleServer(server.id, server.enabled, server.name)}
-                          className="data-[state=checked]:bg-green-500"
+                          className="data-[state=checked]:bg-blue-500"
                         />
                       </div>
                     </div>
@@ -189,12 +194,12 @@ export function MCPPanel() {
       </ScrollArea>
 
       {/* Stats */}
-      <div className="mt-4 pt-4 border-t border-green-900/50">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-green-600">
-            {servers.filter(s => s.enabled).length} von {servers.length} Servern aktiv
+      <div className="mt-4 pt-4 border-t border-slate-200">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-slate-500">
+            <span className="font-semibold text-slate-700">{servers.filter(s => s.enabled).length}</span> von {servers.length} Servern aktiv
           </span>
-          <Badge variant="outline" className="border-green-900/50 text-green-600">
+          <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
             <Server className="w-3 h-3 mr-1" />
             MCP Ready
           </Badge>

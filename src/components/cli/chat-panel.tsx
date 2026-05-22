@@ -9,18 +9,19 @@ import {
   Send, 
   Loader2, 
   Image as ImageIcon, 
-  Search, 
   Code, 
   Wand2, 
   Copy,
   Check,
   Sparkles,
   Globe,
-  FileImage
+  FileImage,
+  Bot,
+  User
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export function ChatPanel() {
   const { messages, addMessage, isLoading, setIsLoading, addTerminalOutput } = useAppStore();
@@ -132,16 +133,16 @@ export function ChatPanel() {
   };
 
   const modeButtons = [
-    { id: 'chat', label: 'Chat', icon: Sparkles },
-    { id: 'search', label: 'Search', icon: Globe },
-    { id: 'image', label: 'Image', icon: FileImage },
-    { id: 'vision', label: 'Vision', icon: ImageIcon },
+    { id: 'chat', label: 'Chat', icon: Sparkles, color: 'violet' },
+    { id: 'search', label: 'Search', icon: Globe, color: 'blue' },
+    { id: 'image', label: 'Image', icon: FileImage, color: 'pink' },
+    { id: 'vision', label: 'Vision', icon: ImageIcon, color: 'emerald' },
   ];
 
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* Mode Selector */}
-      <div className="border-b border-green-900/50 p-3 flex items-center gap-2 bg-gray-950/50">
+      <div className="border-b border-slate-200 p-3 flex items-center gap-2 bg-white/80 backdrop-blur-sm">
         {modeButtons.map((btn) => (
           <Button
             key={btn.id}
@@ -150,9 +151,12 @@ export function ChatPanel() {
             onClick={() => setMode(btn.id as any)}
             className={`gap-2 ${
               mode === btn.id
-                ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30'
-                : 'text-green-600 hover:text-green-400 hover:bg-green-500/10'
+                ? `bg-${btn.color}-500 text-white shadow-lg shadow-${btn.color}-500/25 hover:bg-${btn.color}-600`
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
+            style={mode === btn.id ? { 
+              backgroundColor: btn.color === 'violet' ? '#8b5cf6' : btn.color === 'blue' ? '#3b82f6' : btn.color === 'pink' ? '#ec4899' : '#10b981',
+            } : {}}
           >
             <btn.icon className="w-4 h-4" />
             {btn.label}
@@ -165,29 +169,41 @@ export function ChatPanel() {
         <div className="space-y-4 max-w-4xl mx-auto">
           {messages.length === 0 && (
             <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
-                <Wand2 className="w-8 h-8 text-green-400" />
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-xl shadow-violet-500/25">
+                <Wand2 className="w-10 h-10 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-green-400 mb-2">Willkommen bei AI-CLI</h2>
-              <p className="text-green-600 text-sm mb-6">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent mb-2">Willkommen bei AI-CLI</h2>
+              <p className="text-slate-500 text-sm mb-8">
                 Dein KI-Terminal-Assistent mit allen Skills
               </p>
-              <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
-                <div className="p-3 rounded-lg border border-green-900/50 bg-green-500/5 text-left">
-                  <Code className="w-5 h-5 text-green-400 mb-2" />
-                  <p className="text-xs text-green-600">Code schreiben & analysieren</p>
+              <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow text-left">
+                  <div className="w-10 h-10 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center mb-3">
+                    <Code className="w-5 h-5" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-700">Code schreiben</p>
+                  <p className="text-xs text-slate-500 mt-1">Code analysieren & erstellen</p>
                 </div>
-                <div className="p-3 rounded-lg border border-green-900/50 bg-green-500/5 text-left">
-                  <Globe className="w-5 h-5 text-green-400 mb-2" />
-                  <p className="text-xs text-green-600">Web-Suche & Recherche</p>
+                <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow text-left">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mb-3">
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-700">Web-Suche</p>
+                  <p className="text-xs text-slate-500 mt-1">Recherche & Informationen</p>
                 </div>
-                <div className="p-3 rounded-lg border border-green-900/50 bg-green-500/5 text-left">
-                  <FileImage className="w-5 h-5 text-green-400 mb-2" />
-                  <p className="text-xs text-green-600">Bilder generieren</p>
+                <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow text-left">
+                  <div className="w-10 h-10 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center mb-3">
+                    <FileImage className="w-5 h-5" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-700">Bilder erstellen</p>
+                  <p className="text-xs text-slate-500 mt-1">KI-Bildgenerierung</p>
                 </div>
-                <div className="p-3 rounded-lg border border-green-900/50 bg-green-500/5 text-left">
-                  <ImageIcon className="w-5 h-5 text-green-400 mb-2" />
-                  <p className="text-xs text-green-600">Bilder analysieren</p>
+                <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow text-left">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mb-3">
+                    <ImageIcon className="w-5 h-5" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-700">Bilder analysieren</p>
+                  <p className="text-xs text-slate-500 mt-1">Vision Understanding</p>
                 </div>
               </div>
             </div>
@@ -196,27 +212,29 @@ export function ChatPanel() {
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`p-4 rounded-lg border ${
+              className={`p-4 rounded-2xl ${
                 message.role === 'user'
-                  ? 'bg-green-500/10 border-green-500/30 ml-8'
-                  : 'bg-gray-900/50 border-green-900/50 mr-8'
+                  ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white ml-8 shadow-lg shadow-violet-500/25'
+                  : 'bg-white border border-slate-200 mr-8 shadow-sm'
               }`}
             >
               <div className="flex items-start gap-3">
                 <div
                   className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                     message.role === 'user'
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-gray-800 text-green-400'
+                      ? 'bg-white/20 text-white'
+                      : 'bg-gradient-to-br from-violet-500 to-purple-600 text-white'
                   }`}
                 >
-                  {message.role === 'user' ? '👤' : '🤖'}
+                  {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs text-green-600 mb-2">
+                  <div className={`text-xs mb-2 font-medium ${
+                    message.role === 'user' ? 'text-white/80' : 'text-slate-500'
+                  }`}>
                     {message.role === 'user' ? 'Du' : 'AI-CLI'}
                   </div>
-                  <div className="prose prose-invert prose-green max-w-none">
+                  <div className={`prose max-w-none ${message.role === 'user' ? 'prose-invert' : ''}`}>
                     <ReactMarkdown
                       components={{
                         code({ className, children, ...props }) {
@@ -227,16 +245,16 @@ export function ChatPanel() {
                           return match ? (
                             <div className="relative group">
                               <SyntaxHighlighter
-                                style={oneDark}
+                                style={oneLight}
                                 language={match[1]}
                                 PreTag="div"
-                                className="rounded-lg !bg-gray-900"
+                                className="rounded-lg !bg-slate-50 border border-slate-200"
                               >
                                 {codeString}
                               </SyntaxHighlighter>
                               <button
                                 onClick={() => copyToClipboard(codeString, id)}
-                                className="absolute top-2 right-2 p-1.5 rounded bg-gray-800 text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-2 right-2 p-1.5 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 {copiedId === id ? (
                                   <Check className="w-4 h-4" />
@@ -256,7 +274,7 @@ export function ChatPanel() {
                             <img
                               src={src}
                               alt={alt || 'Generated image'}
-                              className="max-w-full rounded-lg border border-green-900/50"
+                              className="max-w-full rounded-xl border border-slate-200 shadow-sm"
                             />
                           );
                         },
@@ -271,16 +289,18 @@ export function ChatPanel() {
           ))}
 
           {isLoading && (
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-gray-900/50 border border-green-900/50">
-              <Loader2 className="w-5 h-5 text-green-400 animate-spin" />
-              <span className="text-green-600">Verarbeite...</span>
+            <div className="flex items-center gap-3 p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 text-white flex items-center justify-center">
+                <Loader2 className="w-4 h-4 animate-spin" />
+              </div>
+              <span className="text-slate-500">Verarbeite...</span>
             </div>
           )}
         </div>
       </ScrollArea>
 
       {/* Input Area */}
-      <div className="border-t border-green-900/50 p-4 bg-gray-950/50">
+      <div className="border-t border-slate-200 p-4 bg-white/80 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto">
           {mode === 'vision' && (
             <div className="mb-3">
@@ -288,7 +308,7 @@ export function ChatPanel() {
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
                 placeholder="Bild-URL eingeben (oder Base64 data:image/...)"
-                className="bg-gray-900 border-green-900/50 text-green-400 placeholder:text-green-700 focus:border-green-500"
+                className="bg-slate-50 border-slate-200 text-slate-700 placeholder:text-slate-400 focus:border-violet-500 focus:ring-violet-500"
               />
             </div>
           )}
@@ -306,12 +326,12 @@ export function ChatPanel() {
                   ? 'Bild-Prompt eingeben...'
                   : 'Frage zum Bild...'
               }
-              className="bg-gray-900 border-green-900/50 text-green-400 placeholder:text-green-700 focus:border-green-500"
+              className="bg-slate-50 border-slate-200 text-slate-700 placeholder:text-slate-400 focus:border-violet-500 focus:ring-violet-500"
             />
             <Button
               onClick={handleSend}
               disabled={isLoading || (!input.trim() && mode !== 'vision')}
-              className="bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30"
+              className="bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 hover:opacity-90"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
