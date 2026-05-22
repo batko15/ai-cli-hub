@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import { ChatPanel } from '@/components/cli/chat-panel';
 import { TerminalPanel } from '@/components/cli/terminal-panel';
@@ -9,6 +9,7 @@ import { WorkflowsPanel } from '@/components/cli/workflows-panel';
 import { AgentsPanel } from '@/components/cli/agents-panel';
 import { SettingsPanel } from '@/components/cli/settings-panel';
 import { SkillsPanel } from '@/components/cli/skills-panel';
+import { MCPPanel } from '@/components/cli/mcp-panel';
 import { 
   Command, 
   Sparkles, 
@@ -18,7 +19,8 @@ import {
   Settings, 
   Wand2,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
+  Server
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,6 +32,7 @@ export default function CLIDashboard() {
   const navItems = [
     { id: 'chat', label: 'Chat', icon: Command },
     { id: 'skills', label: 'Skills', icon: Sparkles },
+    { id: 'mcp', label: 'MCP', icon: Server },
     { id: 'projects', label: 'Projects', icon: FolderTree },
     { id: 'workflows', label: 'Workflows', icon: Workflow },
     { id: 'agents', label: 'Agents', icon: Bot },
@@ -101,7 +104,7 @@ export default function CLIDashboard() {
           <div className="flex items-center gap-4 text-xs text-green-600">
             <span>Model: Default</span>
             <span>|</span>
-            <span>Skills: 10 Active</span>
+            <span>28 Skills | 9 MCP Servers</span>
           </div>
         </header>
 
@@ -118,6 +121,7 @@ export default function CLIDashboard() {
             >
               {activeView === 'chat' && <ChatPanel />}
               {activeView === 'skills' && <SkillsPanel />}
+              {activeView === 'mcp' && <MCPPanel />}
               {activeView === 'projects' && <ProjectsPanel />}
               {activeView === 'workflows' && <WorkflowsPanel />}
               {activeView === 'agents' && <AgentsPanel />}

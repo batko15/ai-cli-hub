@@ -1,0 +1,309 @@
+# Cursor AI Rules
+
+## Project Overview
+
+This is a Next.js 16 application with AI capabilities. Follow these guidelines when working with this codebase.
+
+---
+
+## General Guidelines
+
+1. **Write clean, readable code** - Code is read more often than written
+2. **Follow existing patterns** - Consistency over personal preference
+3. **Think before generating** - Understand the context and requirements
+4. **Test your changes** - Verify functionality before committing
+
+---
+
+## Language & Framework Rules
+
+### TypeScript
+- Always use strict type checking
+- Prefer `interface` over `type` for object shapes
+- Use `const` assertions for immutable values
+- Avoid `any` - use `unknown` when type is uncertain
+- Enable all strict compiler options
+
+### React & Next.js
+- Use functional components with hooks
+- Default to Server Components
+- Use `'use client'` only when necessary
+- Implement proper loading and error states
+- Use dynamic imports for code splitting
+
+### Styling (Tailwind CSS)
+- Use utility classes directly in JSX
+- Follow mobile-first responsive design
+- Use CSS variables for theming
+- Implement dark mode with `dark:` prefix
+- Keep responsive classes in order: base → sm → md → lg → xl
+
+---
+
+## Code Style
+
+### File Naming
+```
+components/
+├── ui/
+│   ├── button.tsx          # kebab-case for files
+│   └── input.tsx
+├── features/
+│   ├── user-profile.tsx
+│   └── product-card.tsx
+```
+
+### Component Structure
+```tsx
+// 1. Imports (grouped)
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+
+// 2. Types
+interface ComponentProps {
+  title: string;
+  className?: string;
+}
+
+// 3. Component
+export function Component({ title, className }: ComponentProps) {
+  // Hooks at the top
+  const [state, setState] = useState(null);
+  
+  // Handlers
+  const handleClick = () => {};
+  
+  // Render
+  return (
+    <div className={cn('base-styles', className)}>
+      {title}
+    </div>
+  );
+}
+```
+
+### Function Guidelines
+```typescript
+// ✅ Good: Small, focused functions
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// ✅ Good: Pure functions when possible
+function calculateTotal(items: CartItem[]): number {
+  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+}
+
+// ✅ Good: Early returns for clarity
+function getUserStatus(user: User | null): string {
+  if (!user) return 'guest';
+  if (user.isAdmin) return 'admin';
+  return 'member';
+}
+```
+
+---
+
+## Best Practices
+
+### 1. Error Handling
+```typescript
+// ✅ Good: Comprehensive error handling
+try {
+  const result = await operation();
+  return { success: true, data: result };
+} catch (error) {
+  if (error instanceof ValidationError) {
+    return { success: false, error: error.message };
+  }
+  console.error('Unexpected error:', error);
+  return { success: false, error: 'An unexpected error occurred' };
+}
+```
+
+### 2. Async Operations
+```typescript
+// ✅ Good: Proper async/await usage
+async function fetchUser(id: string): Promise<User> {
+  const response = await fetch(`/api/users/${id}`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user: ${response.status}`);
+  }
+  
+  return response.json();
+}
+
+// ✅ Good: Parallel operations
+const [users, products] = await Promise.all([
+  fetchUsers(),
+  fetchProducts(),
+]);
+```
+
+### 3. State Management
+```typescript
+// ✅ Good: Local state for UI-only concerns
+const [isOpen, setIsOpen] = useState(false);
+
+// ✅ Good: Server state with TanStack Query
+const { data, isLoading, error } = useQuery({
+  queryKey: ['users'],
+  queryFn: fetchUsers,
+});
+
+// ✅ Good: Global state with Zustand
+const useStore = create((set) => ({
+  user: null,
+  setUser: (user) => set({ user }),
+}));
+```
+
+### 4. Performance
+```typescript
+// ✅ Good: Memoize expensive computations
+const sortedItems = useMemo(
+  () => items.sort((a, b) => a.name.localeCompare(b.name)),
+  [items]
+);
+
+// ✅ Good: Stable callback references
+const handleSubmit = useCallback(
+  (data: FormData) => {
+    submitForm(data);
+  },
+  [submitForm]
+);
+
+// ✅ Good: Lazy load heavy components
+const HeavyComponent = dynamic(
+  () => import('./HeavyComponent'),
+  { loading: () => <Skeleton /> }
+);
+```
+
+---
+
+## Project-Specific Rules
+
+### API Routes
+- Use standard HTTP methods (GET, POST, PUT, DELETE)
+- Validate all inputs with Zod
+- Return consistent response format
+- Handle errors gracefully
+
+### Database (Prisma)
+- Always use transactions for related operations
+- Use select to limit returned fields
+- Implement proper pagination
+- Handle unique constraint violations
+
+### AI Integration
+- Use z-ai-web-dev-sdk on backend only
+- Never expose API keys in client code
+- Implement rate limiting
+- Handle API errors gracefully
+
+---
+
+## File Size Limits
+
+- **Components**: Under 200 lines
+- **Functions**: Under 50 lines
+- **Files**: Under 300 lines
+
+If a file exceeds these limits, consider splitting into smaller modules.
+
+---
+
+## Commit Guidelines
+
+Use conventional commits:
+
+```
+feat: add user authentication
+fix: resolve login validation error
+docs: update API documentation
+style: format code with prettier
+refactor: simplify user service
+test: add tests for user service
+chore: update dependencies
+```
+
+---
+
+## Testing
+
+- Write tests for critical functionality
+- Use descriptive test names
+- Follow AAA pattern (Arrange, Act, Assert)
+- Mock external dependencies
+
+```typescript
+describe('UserService', () => {
+  describe('createUser', () => {
+    it('should create a user with valid data', async () => {
+      // Arrange
+      const data = { email: 'test@example.com', name: 'Test' };
+      
+      // Act
+      const user = await userService.createUser(data);
+      
+      // Assert
+      expect(user.id).toBeDefined();
+      expect(user.email).toBe(data.email);
+    });
+    
+    it('should reject invalid email', async () => {
+      await expect(
+        userService.createUser({ email: 'invalid', name: 'Test' })
+      ).rejects.toThrow('Invalid email');
+    });
+  });
+});
+```
+
+---
+
+## Security Checklist
+
+- [ ] No hardcoded secrets or credentials
+- [ ] Input validation on all forms
+- [ ] Output sanitization for user content
+- [ ] HTTPS for all external requests
+- [ ] Proper authentication checks
+- [ ] Rate limiting on sensitive endpoints
+
+---
+
+## Accessibility
+
+- Use semantic HTML elements
+- Add ARIA attributes when needed
+- Ensure keyboard navigation works
+- Maintain sufficient color contrast
+- Provide alt text for images
+- Use focus indicators
+
+```tsx
+// ✅ Good: Accessible button
+<button
+  type="button"
+  aria-label="Close dialog"
+  aria-pressed={isOpen}
+  onClick={handleClose}
+>
+  <XIcon aria-hidden="true" />
+</button>
+```
+
+---
+
+## Resources
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Documentation](https://react.dev)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+- [shadcn/ui](https://ui.shadcn.com)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/)
