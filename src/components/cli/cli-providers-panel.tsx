@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -45,15 +45,10 @@ const PROVIDER_COLORS: Record<string, { bg: string; text: string; border: string
 
 export function CLIProvidersPanel() {
   const { addTerminalOutput } = useAppStore();
-  const [providers, setProviders] = useState<CLIProvider[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [providers, setProviders] = useState<CLIProvider[]>(CLI_PROVIDERS);
+  const [loading, setLoading] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<'windows' | 'linux' | 'termux'>('linux');
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
-
-  useEffect(() => {
-    setProviders(CLI_PROVIDERS);
-    setLoading(false);
-  }, []);
 
   const toggleProvider = (id: string, currentEnabled: boolean, name: string) => {
     setProviders(providers.map(p => 
